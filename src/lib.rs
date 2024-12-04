@@ -26,10 +26,11 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn get_solution(day: u8) -> impl Solution {
+fn get_solution(day: u8) -> Box<dyn Solution> {
     match day {
-        1 => solution::Day1,
-        _ => unimplemented!(),
+        1 => Box::new(solution::Day1),
+        2 => Box::new(solution::Day2),
+        _ => panic!("Day yet to come!"),
     }
 }
 
