@@ -1,5 +1,5 @@
 use super::{Solution, Error};
-use std::{collections::HashMap, ops::RangeBounds};
+use std::collections::HashMap;
 
 pub struct Day1;
 
@@ -86,5 +86,54 @@ impl Day2 {
         }
 
         true
+    }
+}
+
+pub struct Day3;
+
+impl Solution for Day3 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        // println!("input: {input}");
+        let initial = "mul(";
+        Ok(input.lines().fold(0, |mut acc, l| {
+            let get_num = |start| {
+                let num = &l[start..].chars().take_while(char::is_ascii_digit).collect::<String>();
+                num.parse::<usize>().ok().map(|v| (v, num.len()))
+            };
+
+            let mut idx = 0;
+            // min length is mul(0,0), i.e. 4 more than initials. Plus 1 for getting index.
+            while idx <= l.len() - initial.len() - 4 {
+                if l[idx..].starts_with(initial) {
+                    idx += initial.len();
+
+                    if let Some((first, len)) = get_num(idx) {
+                        idx += len;
+
+                        let comma = ",";
+                        if &l[idx..idx + 1] == comma {
+                            idx += comma.len();
+                            if let Some((second, len)) = get_num(idx) {
+                                idx += len;
+
+                                let end_parenthesis = ")";
+                                if &l[idx..idx + 1] == end_parenthesis {
+                                    idx += end_parenthesis.len();
+                                    acc += first * second;
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    idx += 1;
+                }
+            }
+            acc
+        }))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        todo!()
     }
 }

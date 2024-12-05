@@ -4,8 +4,16 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
     let mut args  = std::env::args();
     args.next();
 
-    let day = args.next().expect(r#"Which day to solve? Run 'cargo run -- ${day number} ${part number}'."#).parse::<u8>()?;
-    let part = Part::parse(args.next().expect(r#"Which part to solve? Run 'cargo run -- ${day number} ${part number}'"#))?;
+    let info = "\n\nWhich day to solve? Run 'cargo run -- ${day number} ${part number}'\nTo initialize new files for new day run `cargo run -- ${day number} init\n\n";
+    let day = args.next().expect(info).parse::<u8>().expect(info);
+
+    let arg = args.next().expect("\n\nWhich part to solve? Run 'cargo run -- ${day number} ${part number}'\nTo initialize new files for new day run `cargo run -- ${day number} init`\n\n");
+    
+    if arg == "init" {
+        return Ok(create(day)?);
+    }
+
+    let part = Part::parse(arg)?;
     let path = match args.next() {
         Some(arg) if arg == "test" => format!("input/day{day}-part{part}_test.txt"),
         Some(arg) => panic!("Invalid argument {} passed. Run 'cargo run -- 1 test' to run test code", arg),
@@ -22,7 +30,22 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
     };
     let elapsed = instant.elapsed();
 
-    println!("ans: {ans}. Time taken {elapsed:?}");
+    println!("ans: {ans} Time taken {elapsed:?}");
+    Ok(())
+}
+
+fn create(day: u8) -> Result<(), std::io::Error> {
+    let create = |file: String| -> Result<(), std::io::Error> {
+        std::fs::File::create(&file)?;
+        println!("created file: {file}");
+        Ok(())
+    };
+
+    for part in 1..=2 {
+        create(format!("input/day{day}-part{part}.txt"))?;
+        create(format!("input/day{day}-part{part}_test.txt"))?;
+    }
+
     Ok(())
 }
 
@@ -30,6 +53,7 @@ fn get_solution(day: u8) -> Box<dyn Solution> {
     match day {
         1 => Box::new(solution::Day1),
         2 => Box::new(solution::Day2),
+        3 => Box::new(solution::Day3),
         _ => panic!("Day yet to come!"),
     }
 }
