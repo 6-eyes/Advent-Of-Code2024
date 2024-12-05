@@ -185,3 +185,61 @@ impl Solution for Day3 {
         }))
     }
 }
+
+pub struct Day4;
+
+impl Solution for Day4 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let word = "XMAS";
+        let grid = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
+        let w = grid.first().expect("invalid input").len() as isize;
+        let h = grid.len() as isize;
+        let char_at = |x: isize, y: isize| grid[y as usize][x as usize];
+
+        let directions = [-1, 0, 1].into_iter().flat_map(|y| [-1, 0, 1].into_iter().map(move |x| (x, y))).filter(|&(x, y)| x != 0 || y != 0).collect::<Vec<(isize, isize)>>();
+        let word_vec = word.chars().collect::<Vec<char>>();
+
+        Ok((0..h).fold(0, |h_acc, y| {
+            (0..w).fold(0, |mut w_acc, x| {
+                w_acc += directions.iter().fold(0, |acc, (del_x, del_y)| {
+
+                    let mut match_count = 0;
+                    let (mut i, mut j) = (x, y);
+                    while i > -1 && i < w && j > -1 && j < h && match_count < word_vec.len() && char_at(i, j) == word_vec[match_count] {
+                        match_count += 1;
+                        i += del_x;
+                        j += del_y;
+                    }
+
+                    match match_count == word.len() {
+                        true => acc + 1,
+                        false => acc,
+                    }
+                });
+                w_acc
+            }) + h_acc
+        }))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let grid = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
+        let w = grid.first().expect("invalid input").len() as isize;
+        let h = grid.len() as isize;
+
+        if h < 3 || w < 3 {
+            return Ok(0);
+        }
+
+        let char_at = |x: isize, y: isize| grid[y as usize][x as usize];
+
+        Ok((1..h - 1).fold(0, |h_acc, y| {
+            (1..w - 1).fold(0, |w_acc, x| {
+                match char_at(x, y) == 'A' && (char_at(x - 1, y - 1) == 'M' && char_at(x + 1, y + 1) == 'S' || char_at(x - 1, y - 1) == 'S' && char_at(x + 1, y + 1) == 'M') && (char_at(x - 1, y + 1) == 'M' && char_at(x + 1, y - 1) == 'S' || char_at(x - 1, y + 1) == 'S' && char_at(x + 1, y - 1) == 'M') {
+                    true => w_acc + 1,
+                    false => w_acc,
+                }
+            }) + h_acc
+        }))
+
+    }
+}
