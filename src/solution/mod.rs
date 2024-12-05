@@ -93,8 +93,9 @@ pub struct Day3;
 
 impl Solution for Day3 {
     fn part_1(&self, input: String) -> Result<usize, Error> {
-        // println!("input: {input}");
         let initial = "mul(";
+        let comma = ",";
+        let end_parenthesis = ")";
         Ok(input.lines().fold(0, |mut acc, l| {
             let get_num = |start| {
                 let num = &l[start..].chars().take_while(char::is_ascii_digit).collect::<String>();
@@ -110,13 +111,11 @@ impl Solution for Day3 {
                     if let Some((first, len)) = get_num(idx) {
                         idx += len;
 
-                        let comma = ",";
                         if &l[idx..idx + 1] == comma {
                             idx += comma.len();
                             if let Some((second, len)) = get_num(idx) {
                                 idx += len;
 
-                                let end_parenthesis = ")";
                                 if &l[idx..idx + 1] == end_parenthesis {
                                     idx += end_parenthesis.len();
                                     acc += first * second;
@@ -134,6 +133,55 @@ impl Solution for Day3 {
     }
 
     fn part_2(&self, input: String) -> Result<usize, Error> {
-        todo!()
+        let initial = "mul(";
+        let do_instruction = "do()";
+        let dont_instruction = "don't()";
+        let comma = ",";
+        let end_parenthesis = ")";
+
+        let mut enabled = true;
+        Ok(input.lines().fold(0, |mut acc, l| {
+            let get_num = |start| {
+                let num = &l[start..].chars().take_while(char::is_ascii_digit).collect::<String>();
+                num.parse::<usize>().ok().map(|v| (v, num.len()))
+            };
+
+            let mut idx = 0;
+            // min length is mul(0,0), i.e. 4 more than initials. Plus 1 for getting index.
+            while idx <= l.len() - initial.len() - 4 {
+                if l[idx..].starts_with(do_instruction) {
+                    enabled = true;
+                    idx += do_instruction.len();
+                }
+                else if l[idx..].starts_with(dont_instruction) {
+                    enabled = false;
+                    idx += dont_instruction.len();
+                }
+
+                if enabled && l[idx..].starts_with(initial) {
+                    idx += initial.len();
+
+                    if let Some((first, len)) = get_num(idx) {
+                        idx += len;
+
+                        if &l[idx..idx + 1] == comma {
+                            idx += comma.len();
+                            if let Some((second, len)) = get_num(idx) {
+                                idx += len;
+
+                                if &l[idx..idx + 1] == end_parenthesis {
+                                    idx += end_parenthesis.len();
+                                    acc += first * second;
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    idx += 1;
+                }
+            }
+            acc
+        }))
     }
 }
