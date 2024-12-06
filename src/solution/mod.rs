@@ -243,3 +243,81 @@ impl Solution for Day4 {
 
     }
 }
+
+pub struct Day5;
+
+
+impl Solution for Day5 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let invalid = "invalid input";
+        let (rules, updates) = input.split_once("\n\n").expect(invalid);
+        let rulebook = rules.lines().fold(HashMap::new(), |mut acc, l| {
+            let (before, after) = l.split_once("|").expect(invalid);
+            let parse = |s: &str| s.parse::<usize>().expect(invalid);
+            let (before, after) = (parse(before), parse(after));
+            acc.entry((before, after)).or_insert(true);
+            acc.entry((after, before)).or_insert(false);
+            acc
+        });
+
+        Ok(updates.lines().fold(0, |acc, l| {
+            let line = l.split(",").map(|v| v.parse::<usize>().expect(invalid)).collect::<Vec<usize>>();
+            if line.len() < 2 {
+                return acc + 1;
+            }
+
+            for i in 0..line.len() - 1 {
+                for j in i + 1..line.len() {
+                    if let Some(valid) = rulebook.get(&(line[i], line[j])) {
+                        if !valid { return acc; }
+                    }
+                }
+            }
+
+            acc + line[line.len() / 2]
+        }))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let invalid = "invalid input";
+        let (rules, updates) = input.split_once("\n\n").expect(invalid);
+        let rulebook = rules.lines().fold(HashMap::new(), |mut acc, l| {
+            let (before, after) = l.split_once("|").expect(invalid);
+            let parse = |s: &str| s.parse::<usize>().expect(invalid);
+            let (before, after) = (parse(before), parse(after));
+            acc.entry((before, after)).or_insert(true);
+            acc.entry((after, before)).or_insert(false);
+            acc
+        });
+
+        Ok(updates.lines().fold(0, |acc, l| {
+            let mut line = l.split(",").map(|v| v.parse::<usize>().expect(invalid)).collect::<Vec<usize>>();
+            if line.len() < 2 {
+                return acc + 1;
+            }
+
+            for i in 0..line.len() - 1 {
+                for j in i + 1..line.len() {
+                    if let Some(valid) = rulebook.get(&(line[i], line[j])) {
+                        if !valid {
+                            // process invalid line
+                            line.sort_by(|&left, &right| {
+                                rulebook.get(&(left, right)).map(|&valid| {
+                                    match valid {
+                                        true => std::cmp::Ordering::Less,
+                                        false => std::cmp::Ordering::Greater,
+                                    }
+                                }).unwrap_or(std::cmp::Ordering::Equal)
+                            });
+
+                            return acc + line[line.len() / 2]
+                        }
+                    }
+                }
+            }
+
+            acc
+        }))
+
+    }
+}
