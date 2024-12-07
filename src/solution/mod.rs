@@ -436,3 +436,52 @@ impl Solution for Day6 {
         }))
     }
 }
+
+pub struct Day7;
+
+impl Solution for Day7 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let error_str = "Invalid input";
+        Ok(input.lines().fold(0, |acc, l| {
+            let (test_str, numbers_str) = l.split_once(":").expect(error_str);
+            let test = test_str.parse::<usize>().expect(error_str);
+            let numbers = numbers_str.split_whitespace().map(|num_str| num_str.parse::<usize>().expect(error_str)).collect::<Vec<usize>>();
+            match Self::calibrated(test, &numbers) {
+                true => acc + test,
+                false => acc,
+            }
+        }))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let error_str = "Invalid input";
+        Ok(input.lines().fold(0, |acc, l| {
+            let (test_str, numbers_str) = l.split_once(":").expect(error_str);
+            let test = test_str.parse::<usize>().expect(error_str);
+            let numbers = numbers_str.split_whitespace().map(|num_str| num_str.parse::<usize>().expect(error_str)).collect::<Vec<usize>>();
+            match Self::concatenated_calibration(test, &numbers) {
+                true => acc + test,
+                false => acc,
+            }
+        }))
+    }
+}
+
+impl Day7 {
+    fn calibrated(target: usize, numbers: &[usize]) -> bool {
+        if numbers.len() == 1 { target == numbers[0] }
+        else if target % numbers[numbers.len() - 1] == 0 && Self::calibrated(target / numbers[numbers.len() - 1], &numbers[..numbers.len() - 1]) || target > numbers[numbers.len() - 1] && Self::calibrated(target - numbers[numbers.len() - 1], &numbers[..numbers.len() - 1]) { true }
+        else { false }
+    }
+
+    fn concatenated_calibration(target: usize, numbers: &[usize]) -> bool {
+        if numbers.len() == 1 { return target == numbers[0]; }
+        let last = numbers[numbers.len() - 1];
+        let remaining_numbers = &numbers[..numbers.len() - 1];
+        if target % last == 0 && Self::concatenated_calibration(target / last, remaining_numbers) || target > last && Self::concatenated_calibration(target - last, remaining_numbers) { return true; }
+        let last_digit_count = last.ilog10();
+        let e = 10usize.pow(last_digit_count as u32 + 1);
+        if target.ilog10() > last_digit_count && target % e == last && Self::concatenated_calibration(target / e, remaining_numbers) { return true; }
+        false
+    }
+}
