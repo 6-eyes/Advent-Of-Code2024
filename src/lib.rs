@@ -36,7 +36,7 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 
 fn create(day: u8) -> Result<(), std::io::Error> {
     let create = |file: String| -> Result<(), std::io::Error> {
-        if std::fs::exists(&file).is_err() {
+        if !std::fs::exists(&file)? {
             std::fs::File::create(&file)?;
             println!("created file: {file}");
         }
@@ -59,7 +59,7 @@ fn get_solution(day: u8) -> Box<dyn Solution> {
         4 => Box::new(solution::Day4),
         5 => Box::new(solution::Day5),
         6 => Box::new(solution::Day6),
-        // 7 => Box::new(solution::Day7),
+        7 => Box::new(solution::Day7),
         // 8 => Box::new(solution::Day8),
         // 9 => Box::new(solution::Day9),
         // 10 => Box::new(solution::Day10),
