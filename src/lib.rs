@@ -36,8 +36,10 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 
 fn create(day: u8) -> Result<(), std::io::Error> {
     let create = |file: String| -> Result<(), std::io::Error> {
-        std::fs::File::create(&file)?;
-        println!("created file: {file}");
+        if std::fs::exists(&file).is_err() {
+            std::fs::File::create(&file)?;
+            println!("created file: {file}");
+        }
         Ok(())
     };
 
@@ -56,7 +58,7 @@ fn get_solution(day: u8) -> Box<dyn Solution> {
         3 => Box::new(solution::Day3),
         4 => Box::new(solution::Day4),
         5 => Box::new(solution::Day5),
-        // 6 => Box::new(solution::Day6),
+        6 => Box::new(solution::Day6),
         // 7 => Box::new(solution::Day7),
         // 8 => Box::new(solution::Day8),
         // 9 => Box::new(solution::Day9),
@@ -88,6 +90,7 @@ trait Solution {
 #[derive(Debug)]
 enum Error {
     InvalidArgument,
+    InvalidInput(String),
 }
 
 impl std::error::Error for Error {}
@@ -96,6 +99,7 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InvalidArgument => write!(f, "Invalid argument passed."),
+            Self::InvalidInput(s) => write!(f, "Invalid input.  {}", s)
         }
     }
 }

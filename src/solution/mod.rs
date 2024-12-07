@@ -1,5 +1,5 @@
 use super::{Solution, Error};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub struct Day1;
 
@@ -318,6 +318,121 @@ impl Solution for Day5 {
 
             acc
         }))
+    }
+}
 
+pub struct Day6;
+
+impl Solution for Day6 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let ((mut x, mut y), map) = {
+            let mut start = None;
+            let map = input.lines().enumerate().map(|(y, l)| l.chars().enumerate().inspect(|&(x, c)| {
+                if c == '^' || c == '>' || c == 'v' || c == '<' { start = Some((x, y)) }
+            }).map(|t| t.1).collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
+
+            match start {
+                None => return Err(Error::InvalidInput("Initial position of guard cannot be determined".into())),
+                Some((x, y)) => ((x as isize, y as isize), map),
+            }
+        };
+
+        let h = map.len() as isize;
+        let w = map[0].len() as isize;
+
+        let char_at = |x: isize, y: isize| map[y as usize][x as usize];
+
+        let (mut del_x, mut del_y) = match char_at(x, y) {
+            '^' => (0, -1),
+            '>' => (1, 0),
+            'v' => (0, 1),
+            '<' => (-1, 0),
+            _ => unreachable!(),
+        };
+
+        let mut set = HashSet::new();
+        loop {
+            set.insert((x, y));
+
+            let (new_x, new_y) = (x + del_x, y + del_y);
+            if new_x < 0 || new_x == w || new_y < 0 || new_y == h {
+                break;
+            }
+
+            if char_at(x + del_x, y + del_y) == '#' {
+                (del_x, del_y) = (-del_y, del_x);
+            }
+
+            x += del_x;
+            y += del_y;
+        }
+
+        Ok(set.len())
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let (start , mut map) = {
+            let mut start = None;
+            let map = input.lines().enumerate().map(|(y, l)| l.chars().enumerate().inspect(|&(x, c)| {
+                if c == '^' || c == '>' || c == 'v' || c == '<' { start = Some((x, y)) }
+            }).map(|t| t.1).collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
+
+            match start {
+                None => return Err(Error::InvalidInput("Initial position of guard cannot be determined".into())),
+                Some((x, y)) => ((x as isize, y as isize), map),
+            }
+        };
+
+        let h = map.len() as isize;
+        let w = map[0].len() as isize;
+
+        let del = match map[start.1 as usize][start.0 as usize] {
+            '^' => (0, -1),
+            '>' => (1, 0),
+            'v' => (0, 1),
+            '<' => (-1, 0),
+            _ => unreachable!(),
+        };
+
+        Ok((0..h).fold(0, |h_acc, oy| {
+            (0..w).fold(0, |mut w_acc, ox| {
+                if map[oy as usize][ox as usize] == '.' {
+                    // create obstacle
+                    map[oy as usize][ox as usize] = '#';
+
+                    let mut set = HashSet::new();
+                    let (mut x, mut y) = start;
+                    let (mut del_x, mut del_y) = del;
+                    w_acc += match loop {
+                        set.insert((x, y, del_x, del_y));
+
+                        let (new_x, new_y) = (x + del_x, y + del_y);
+                        if !(0..w).contains(&new_x) || !(0..h).contains(&new_y) {
+                            break false; // out of bounds
+                        }
+
+                        if map[new_y as usize][new_x as usize] == '#' {
+                            (del_x, del_y) = (-del_y, del_x);
+                        }
+                        else {
+                            x += del_x;
+                            y += del_y;
+                        }
+
+                        if set.contains(&(x, y, del_x, del_y)) {
+                            break true; // found loop
+                        }
+                    } {
+                        true => 1,
+                        false => 0,
+                    };
+
+                    // remove obstacle
+                    map[oy as usize][ox as usize] = '.';
+                }
+
+                w_acc
+            }) + h_acc
+        }))
     }
 }
