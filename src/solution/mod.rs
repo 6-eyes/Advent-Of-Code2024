@@ -470,8 +470,7 @@ impl Solution for Day7 {
 impl Day7 {
     fn calibrated(target: usize, numbers: &[usize]) -> bool {
         if numbers.len() == 1 { target == numbers[0] }
-        else if target % numbers[numbers.len() - 1] == 0 && Self::calibrated(target / numbers[numbers.len() - 1], &numbers[..numbers.len() - 1]) || target > numbers[numbers.len() - 1] && Self::calibrated(target - numbers[numbers.len() - 1], &numbers[..numbers.len() - 1]) { true }
-        else { false }
+        else { target % numbers[numbers.len() - 1] == 0 && Self::calibrated(target / numbers[numbers.len() - 1], &numbers[..numbers.len() - 1]) || target > numbers[numbers.len() - 1] && Self::calibrated(target - numbers[numbers.len() - 1], &numbers[..numbers.len() - 1]) }
     }
 
     fn concatenated_calibration(target: usize, numbers: &[usize]) -> bool {
@@ -480,8 +479,90 @@ impl Day7 {
         let remaining_numbers = &numbers[..numbers.len() - 1];
         if target % last == 0 && Self::concatenated_calibration(target / last, remaining_numbers) || target > last && Self::concatenated_calibration(target - last, remaining_numbers) { return true; }
         let last_digit_count = last.ilog10();
-        let e = 10usize.pow(last_digit_count as u32 + 1);
+        let e = 10usize.pow(last_digit_count + 1);
         if target.ilog10() > last_digit_count && target % e == last && Self::concatenated_calibration(target / e, remaining_numbers) { return true; }
         false
+    }
+}
+
+pub struct Day8;
+
+impl Solution for Day8 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let (antennas, w, h) = {
+            let mut h = None;
+            let mut w = None;
+            let antennas = input.lines().enumerate().fold(HashMap::<char, Vec<(usize, usize)>>::new(), |mut acc, (y, l)| {
+                if w.is_none() { w = Some(l.len()); };
+                if h.is_none() || h.unwrap() < y { h = Some(y); }
+
+                l.chars().enumerate().filter(|(_, c)| c.is_alphanumeric()).for_each(|(x, c)| {
+                    acc.entry(c).and_modify(|v| v.push((x, y))).or_insert(vec!{ (x, y) });
+                });
+                acc
+            });
+            
+            if h.is_none() || w.is_none() || antennas.is_empty() { return Err(Error::InvalidInput("invalid input".into())) }
+            (antennas, w.unwrap() as isize, h.unwrap() as isize + 1)
+        };
+
+        Ok(antennas.values().fold(HashSet::new(), |mut acc, antennas| {
+            antennas.iter().flat_map(|&left| {
+                antennas.iter().filter_map(move |&right| match left == right {
+                    true => None,
+                    false => Some((left, right)),
+                })
+            }).for_each(|(left, right)| {
+                let antinode = (2 * left.0 as isize - right.0 as isize, 2 * left.1 as isize - right.1 as isize);
+                if (0..h).contains(&antinode.1) && (0..w).contains(&antinode.0) {
+                    acc.insert(antinode);
+                }
+            });
+
+            acc
+        }).len())
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let (antennas, w, h) = {
+            let mut h = None;
+            let mut w = None;
+            let antennas = input.lines().enumerate().fold(HashMap::<char, Vec<(usize, usize)>>::new(), |mut acc, (y, l)| {
+                if w.is_none() { w = Some(l.len()); };
+                if h.is_none() || h.unwrap() < y { h = Some(y); }
+
+                l.chars().enumerate().filter(|(_, c)| c.is_alphanumeric()).for_each(|(x, c)| {
+                    acc.entry(c).and_modify(|v| v.push((x, y))).or_insert(vec!{ (x, y) });
+                });
+                acc
+            });
+            
+            if h.is_none() || w.is_none() || antennas.is_empty() { return Err(Error::InvalidInput("invalid input".into())) }
+            (antennas, w.unwrap() as isize, h.unwrap() as isize + 1)
+        };
+
+        // initialize the antinodes with antennas
+        let antinodes = antennas.values().flatten().map(|&v| (v.0 as isize, v.1 as isize)).collect::<HashSet<(isize, isize)>>();
+
+        Ok(antennas.values().fold(antinodes, |mut acc, antennas| {
+            antennas.iter().flat_map(|&left| {
+                antennas.iter().filter_map(move |&right| match left == right {
+                    true => None,
+                    false => Some((left, right)),
+                })
+            }).for_each(|(left, right)| {
+                let mut antinode = (left.0 as isize, left.1 as isize);
+                let del = (right.0 as isize - antinode.0, right.1 as isize - antinode.1);
+                loop {
+                    antinode = (antinode.0 - del.0, antinode.1 - del.1);
+                    match (0..h).contains(&antinode.1) && (0..w).contains(&antinode.0) {
+                            true => { acc.insert(antinode); },
+                            false => break,
+                    }
+                }
+            });
+
+            acc
+        }).len())
     }
 }
