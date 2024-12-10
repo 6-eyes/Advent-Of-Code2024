@@ -566,3 +566,79 @@ impl Solution for Day8 {
         }).len())
     }
 }
+
+pub struct Day9;
+
+impl Solution for Day9 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let mut id = 0;
+        let mut disk = input.lines().flat_map(&str::chars).enumerate().flat_map(|(i, c)| {
+            if let Some(count) = c.to_digit(10) {
+                match i & 1 {
+                    0 => {
+                        let iter = std::iter::repeat_n(Some(id), count as usize);
+                        id += 1;
+                        iter
+                    },
+                    1 => std::iter::repeat_n(None, count as usize),
+                    _ => unreachable!(),
+                }
+            }
+            else {
+                std::iter::repeat_n(None, 0)
+            }
+        }).collect::<Vec<Option<usize>>>();
+
+        if disk.is_empty() { return Ok(0) }
+
+        let mut s = 0;
+        let mut e = disk.len() - 1;
+
+        while s < e {
+            while disk[s].is_some() { s += 1; }
+            while disk[e].is_none() { e -= 1; disk.pop(); }
+
+            disk[s] = disk.pop().unwrap();
+            e -= 1;
+            s += 1;
+        }
+
+        Ok(disk.into_iter().flatten().enumerate().fold(0, |acc, (i, v)| i * v + acc))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let err_msg = "invalid input";
+        let (mut files, mut spaces, mut fid, _) = input.lines().flat_map(&str::chars).enumerate().fold((HashMap::new(), Vec::new(), 0usize, 0), |(mut files, mut spaces, fid, pos), (i, c)| {
+            let count = c.to_digit(10).expect(err_msg) as usize;
+            match i & 1 {
+                0 if count != 0 => {
+                    files.insert(fid, (pos, count));
+                    (files, spaces, fid + 1, pos + count)
+                },
+                1 => {
+                    if count != 0 { spaces.push((pos, count)); }
+                    (files, spaces, fid, pos + count)
+                },
+                _ => unreachable!(),
+            }
+        });
+
+        while fid > 0 {
+            fid -= 1;
+            let (file_pos, file_len) = files[&fid];
+
+            let take_till = spaces.iter().take_while(|&&(space_pos, _)| space_pos < file_pos).count();
+            spaces.truncate(take_till);
+
+            if let Some((idx, &(pos, len))) = spaces.iter().enumerate().find(|(_, &(_, space_len))| space_len >= file_len) {
+                match len == file_len {
+                    true => { spaces.remove(idx); },
+                    false => { spaces[idx] = (pos + file_len, len - file_len); }
+                }
+                files.entry(fid).and_modify(|v| *v = (pos, file_len));
+            }
+        }
+
+        Ok(files.into_iter().map(|(k, v)| k * v.1 * (2 * v.0 + v.1 - 1) / 2).sum::<usize>())
+    }
+}
