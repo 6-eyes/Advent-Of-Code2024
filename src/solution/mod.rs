@@ -1,5 +1,5 @@
 use super::{Solution, Error};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 pub struct Day1;
 
@@ -640,5 +640,81 @@ impl Solution for Day9 {
         }
 
         Ok(files.into_iter().map(|(k, v)| k * v.1 * (2 * v.0 + v.1 - 1) / 2).sum::<usize>())
+    }
+}
+
+pub struct Day10;
+
+impl Solution for Day10 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let (mut trailheads, grid) = input.lines().enumerate().fold((Vec::new(), Vec::new()), |(mut trailheads, mut grid), (y, l)| {
+            grid.push(l.chars().enumerate().map(|(x, c)| {
+                let c = c.to_digit(10).expect("invalid input");
+                if c == 0 { trailheads.push((x as isize, y as isize)); }
+                c
+            }).collect::<Vec<u32>>());
+
+            (trailheads, grid)
+        });
+
+        let val_at = |x: isize, y: isize| grid[y as usize][x as usize];
+
+        let h = grid.len() as isize;
+        let w = grid.first().expect("empty input").len() as isize;
+
+        let mut score = 0;
+        while let Some(trail) = trailheads.pop() {
+            let mut q = VecDeque::new();
+            q.push_back(trail);
+
+            let mut seen = HashSet::new();
+            seen.insert(trail);
+
+            while let Some((x, y)) = q.pop_front() {
+                let current = val_at(x, y);
+                [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().for_each(|(i, j)| {
+                    if i >= 0 && i < w && j >= 0 && j < h && val_at(i, j) == current + 1 && !seen.contains(&(i, j)) {
+                        seen.insert((i, j));
+                        match val_at(i, j) == 9 {
+                            true => score += 1,
+                            false => q.push_back((i, j)),
+                        }
+                    }
+                });
+            }
+
+        }
+
+        Ok(score)
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let (mut trailheads, grid) = input.lines().enumerate().fold((VecDeque::new(), Vec::new()), |(mut trailheads, mut grid), (y, l)| {
+            grid.push(l.chars().enumerate().map(|(x, c)| {
+                let c = c.to_digit(10).expect("invalid input");
+                if c == 0 { trailheads.push_back((x as isize, y as isize)); }
+                c
+            }).collect::<Vec<u32>>());
+
+            (trailheads, grid)
+        });
+
+        let val_at = |x: isize, y: isize| grid[y as usize][x as usize];
+
+        let h = grid.len() as isize;
+        let w = grid.first().expect("empty input").len() as isize;
+
+        let mut score = 0;
+        while let Some((x, y)) = trailheads.pop_front() {
+            let current = val_at(x, y);
+            [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().filter(|&(i, j)| i >= 0 && i < w && j >= 0 && j < h && val_at(i, j) == current + 1).for_each(|(i, j)| {
+                match val_at(i, j) == 9 {
+                    true => score += 1,
+                    false => trailheads.push_back((i, j)),
+                }
+            });
+        }
+
+        Ok(score)
     }
 }
