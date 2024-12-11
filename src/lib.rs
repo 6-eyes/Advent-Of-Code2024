@@ -63,7 +63,7 @@ fn get_solution(day: u8) -> Box<dyn Solution> {
         8 => Box::new(solution::Day8),
         9 => Box::new(solution::Day9),
         10 => Box::new(solution::Day10),
-        // 11 => Box::new(solution::Day11),
+        11 => Box::new(solution::Day11),
         // 12 => Box::new(solution::Day12),
         // 13 => Box::new(solution::Day13),
         // 14 => Box::new(solution::Day14),
