@@ -718,3 +718,49 @@ impl Solution for Day10 {
         Ok(score)
     }
 }
+
+pub struct Day11;
+
+impl Solution for Day11 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let init_stones = input.split_whitespace().map(|v| v.parse::<usize>().expect("invalid input")).collect::<Vec<usize>>();
+        let blinks = 25;
+        
+        Ok(Self::count(&init_stones, blinks, &mut HashMap::new()))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let init_stones = input.split_whitespace().map(|v| v.parse::<usize>().expect("invalid input")).collect::<Vec<usize>>();
+        let blinks = 75;
+        
+        Ok(Self::count(&init_stones, blinks, &mut HashMap::new()))
+    }
+}
+
+impl Day11 {
+    fn count(stones: &[usize], remaining_blinks: u16, cache: &mut HashMap<(Vec<usize>, u16), usize>) -> usize {
+        if let Some(&count) = cache.get(&(stones.to_vec(), remaining_blinks)) { count }
+        else if remaining_blinks == 0 { stones.len() }
+        else {
+            let total = stones.iter().map(|&stone| Self::count(&Self::split_stone(stone), remaining_blinks - 1, cache)).sum::<usize>();
+            cache.insert((stones.to_vec(), remaining_blinks), total);
+            total
+        }
+    }
+
+    fn split_stone(stone: usize) -> Vec<usize> {
+        match stone == 0 {
+            true => vec!{ 1 },
+            false => {
+                let digits = stone.ilog10();
+                match digits & 1 == 1 {
+                    true => {
+                        let radix = 10usize.pow((digits  + 1) / 2);
+                        vec!{ stone / radix, stone % radix }
+                    },
+                    false => vec!{ stone * 2024 },
+                }
+            },
+        }
+    }
+}
