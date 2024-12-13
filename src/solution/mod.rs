@@ -859,3 +859,44 @@ impl Solution for Day12 {
         }).sum::<usize>())
     }
 }
+
+pub struct Day13;
+
+impl Solution for Day13 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        Ok(Self::win_prize(input, 0))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        Ok(Self::win_prize(input, 10000000000000))
+    }
+}
+
+impl Day13 {
+    fn win_prize(input: String, offset: usize) -> usize {
+        let error_msg = "invalid input";
+        let extract_coordinate = |l: &str| {
+            let s = l.split_once(',').expect(error_msg);
+            let extract_num = |l: &str| l.chars().skip_while(|c| !c.is_ascii_digit()).collect::<String>().parse::<usize>().expect(error_msg);
+            (extract_num(s.0), extract_num(s.1))
+        };
+
+        input.split("\n\n").map(|machine_str| {
+            let machine = machine_str.lines().map(extract_coordinate).collect::<Vec<(usize, usize)>>();
+            let a = machine[0];
+            let b = machine[1];
+            let x = (machine[2].0 + offset, machine[2].1 + offset);
+
+            let checked_sub = |a: usize, b: usize| a.abs_diff(b);
+            let denom = checked_sub(a.1 * b.0, a.0 * b.1);
+            let num_b = checked_sub(a.1 * x.0, a.0 * x.1);
+            let num_a = checked_sub(b.0 * x.1, b.1 * x.0);
+
+            let checked_div = |n: usize, d: usize| match n.checked_rem(d)? {
+                0 => Some(n / d),
+                _ => None,
+            };
+            checked_div(num_b, denom).and_then(|token_b| checked_div(num_a, denom).map(|token_a| token_a * 3 + token_b)).unwrap_or(0)
+        }).sum::<usize>()
+    }
+}
