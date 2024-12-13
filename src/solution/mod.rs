@@ -764,3 +764,98 @@ impl Day11 {
         }
     }
 }
+
+pub struct Day12;
+
+impl Solution for Day12 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let region = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
+        let char_at = |x: isize, y: isize| region[y as usize][x as usize];
+
+        let h = region.len() as isize;
+        let w = region.first().ok_or(Error::InvalidInput("no input provided".into()))?.len() as isize;
+
+        let plots = region.iter().enumerate().fold((Vec::new(), HashSet::new()), |(mut plots, mut seen), (y, l)| {
+            l.iter().enumerate().for_each(|(x, &c)| {
+                let (x, y) = (x as isize, y as isize);
+                if seen.contains(&(x, y)) { return; } 
+
+                seen.insert((x, y));
+
+                let mut q = VecDeque::new();
+                q.push_back((x, y));
+
+                let mut plot = HashSet::new();
+                plot.insert((x, y));
+
+                while let Some((i, j)) = q.pop_front() {
+                    [(i + 1, j), (i, j + 1), (i - 1, j), (i, j - 1)].into_iter().filter(|&(new_i, new_j)| new_i >= 0 && new_i < w && new_j >= 0 && new_j < h && c == char_at(new_i, new_j)).for_each(|coor| {
+                        if !plot.contains(&coor) {
+                            plot.insert(coor);
+                            q.push_back(coor);
+                        }
+                    });
+                }
+
+                seen.extend(plot.clone());
+                plots.push(plot);
+            });
+            (plots, seen)
+        }).0;
+
+        Ok(plots.into_iter().map(|plot| {
+            let area = plot.len();
+            area * plot.iter().fold(area * 4, |acc, &(x, y)| acc - [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().filter(|coor| plot.contains(coor)).count())
+        }).sum::<usize>())
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let region = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
+        let char_at = |x: isize, y: isize| region[y as usize][x as usize];
+
+        let h = region.len() as isize;
+        let w = region.first().ok_or(Error::InvalidInput("no input provided".into()))?.len() as isize;
+
+        let plots = region.iter().enumerate().fold((Vec::new(), HashSet::new()), |(mut plots, mut seen), (y, l)| {
+            l.iter().enumerate().for_each(|(x, &c)| {
+                let (x, y) = (x as isize, y as isize);
+                if seen.contains(&(x, y)) { return; } 
+
+                seen.insert((x, y));
+
+                let mut q = VecDeque::new();
+                q.push_back((x, y));
+
+                let mut plot = HashSet::new();
+                plot.insert((x, y));
+
+                while let Some((i, j)) = q.pop_front() {
+                    [(i + 1, j), (i, j + 1), (i - 1, j), (i, j - 1)].into_iter().filter(|&(new_i, new_j)| new_i >= 0 && new_i < w && new_j >= 0 && new_j < h && c == char_at(new_i, new_j)).for_each(|coor| {
+                        if !plot.contains(&coor) {
+                            plot.insert(coor);
+                            q.push_back(coor);
+                        }
+                    });
+                }
+
+                seen.extend(plot.clone());
+                plots.push(plot);
+            });
+            (plots, seen)
+        }).0;
+
+        Ok(plots.into_iter().map(|plot| {
+            plot.len() * plot.into_iter().fold(HashMap::new(), |mut acc: HashMap<(isize, isize), Vec<(isize, isize)>>, (x, y)| {
+                let (x, y) = (2 * x, 2 * y);
+                [(x + 1, y + 1), (x - 1, y + 1), (x - 1, y - 1), (x + 1, y - 1)].into_iter().for_each(|(i, j)| {
+                    acc.entry((i, j)).and_modify(|added_by| added_by.push((x, y))).or_insert(vec!{ (x, y) });
+                });
+                acc
+            }).values().map(|v| match v.len() {
+                    2 if v[0].0.abs_diff(v[1].0) == v[0].1.abs_diff(v[1].1) => 2,
+                    1 | 3 => 1,
+                    _ => 0,
+            }).sum::<usize>()
+        }).sum::<usize>())
+    }
+}
