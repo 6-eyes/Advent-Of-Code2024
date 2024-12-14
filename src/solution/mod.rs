@@ -900,3 +900,73 @@ impl Day13 {
         }).sum::<usize>()
     }
 }
+
+pub struct Day14;
+
+impl Solution for Day14 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let error_msg = "invalid input";
+        let w = 101; // 11 for test
+        let h = 103; // 7 for test
+        let (w_half, h_half) = (w / 2, h / 2);
+        let seconds = 100;
+
+        Ok(input.lines().fold(&mut [0; 4], |acc, l| {
+            let mut line_iter = l.split_whitespace().map(|s: &str| {
+                let (_, coor_str) = s.split_once('=').expect(error_msg);
+                let (x, y) = coor_str.split_once(',').expect(error_msg);
+                let parse = |s: &str| s.parse::<isize>().expect(error_msg);
+                (parse(x), parse(y))
+            });
+
+            let p = line_iter.next().expect(error_msg);
+            let v = line_iter.next().expect(error_msg);
+
+            let confine = |x, v, l| ((x + seconds * v) % l + l) % l;
+            let (x, y) = (confine(p.0, v.0, w), confine(p.1, v.1, h));
+
+            if x < w_half && y < h_half { acc[0] += 1; }
+            else if x > w_half && y < h_half { acc[1] += 1; }
+            else if x < w_half && y > h_half { acc[2] += 1; }
+            else if x > w_half && y > h_half { acc[3] += 1; }
+            acc
+        }).iter_mut().fold(1, |acc, v| acc * *v))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let error_msg = "invalid input";
+        let w = 101; // 11 for test
+        let h = 103; // 7 for test
+
+        let mut input = input.lines().map(|l| {
+            let mut line_iter = l.split_whitespace().map(|s: &str| {
+                let (_, coor_str) = s.split_once('=').expect(error_msg);
+                let (x, y) = coor_str.split_once(',').expect(error_msg);
+                let parse = |s: &str| s.parse::<isize>().expect(error_msg);
+                (parse(x), parse(y))
+            });
+
+            (line_iter.next().expect(error_msg), line_iter.next().expect(error_msg))
+        }).collect::<Vec<((isize, isize), (isize, isize))>>();
+
+        let mut second = 0;
+        Ok(loop {
+            second += 1;
+            let unique_positions = input.iter_mut().fold(HashSet::new(), |mut acc, (p, v)| {
+                let m = |x, v, l| ((x + v) % l + l) % l;
+                *p = (m(p.0, v.0, w), m(p.1, v.1, h));
+
+                acc.insert(*p);
+                acc
+            });
+
+            if unique_positions.len() == input.len() {
+                // print tree
+                // let mut map = vec!{ vec!{ '.'; h as usize }; w as usize };
+                // input.iter().for_each(|(p, _)| map[p.0 as usize][p.1 as usize] = '#');
+                // map.into_iter().for_each(|l| println!("{}", l.into_iter().collect::<String>()));
+                break second;
+            }
+        })
+    }
+}
