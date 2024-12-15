@@ -970,3 +970,150 @@ impl Solution for Day14 {
         })
     }
 }
+
+pub struct Day15;
+
+impl Solution for Day15 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let error_msg = "invalid input";
+        let (grid, moves) = input.split_once("\n\n").expect(error_msg);
+
+        let (walls, mut boxes, robot) = grid.lines().enumerate().fold((HashSet::new(), HashSet::new(), None), |(mut walls, mut boxes, mut robot), (y, l)| {
+            l.chars().enumerate().for_each(|(x, c)| {
+                let (x, y) = (x as isize, y as isize);
+                match c {
+                    '#' => { walls.insert((x, y)); },
+                    'O' => { boxes.insert((x, y)); },
+                    '@' if robot.is_none() => robot = Some((x, y)),
+                    '.' => (),
+                    _ => panic!("invalid input {}", c),
+                }
+            });
+            (walls, boxes, robot)
+        });
+
+        let mut robot = robot.expect(error_msg);
+
+        moves.lines().flat_map(&str::chars).map(|c| {
+            match c {
+                '<' => (-1, 0),
+                '^' => (0, -1),
+                '>' => (1, 0),
+                'v' => (0, 1),
+                _ => panic!("invalid input {}", c),
+            }
+        }).for_each(|m| {
+            let pos = (robot.0 + m.0, robot.1 + m.1);
+            if boxes.contains(&pos) {
+                let mut n = pos;
+                if loop {
+                    n = (n.0 + m.0, n.1 + m.1);
+                    if walls.contains(&n) { break false; }
+                    else if !boxes.contains(&n) { break true; }
+                } {
+                    boxes.insert(n);
+                    boxes.remove(&pos);
+
+                    robot = pos;
+                }
+            }
+            else if !walls.contains(&pos) {
+                robot = pos;
+            }
+        });
+
+        Ok(boxes.into_iter().map(|(x, y)| (y * 100 + x) as usize).sum::<usize>())
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let error_msg = "invalid input";
+        let (grid, moves) = input.split_once("\n\n").expect(error_msg);
+
+        let (walls, mut boxes, robot) = grid.lines().enumerate().fold((HashSet::new(), HashSet::new(), None), |(mut walls, mut boxes, mut robot), (y, l)| {
+            l.chars().enumerate().for_each(|(x, c)| {
+                let (x, y) = (2 * x as isize, y as isize);
+                match c {
+                    '#' => { walls.insert((x, y)); },
+                    'O' => { boxes.insert((x, y)); },
+                    '@' if robot.is_none() => robot = Some((x, y)),
+                    '.' => (),
+                    _ => panic!("invalid input {}", c),
+                }
+            });
+            (walls, boxes, robot)
+        });
+
+        let mut robot = robot.expect(error_msg);
+
+        moves.lines().flat_map(&str::chars).map(|c| {
+            match c {
+                '<' => (-1, 0),
+                '^' => (0, -1),
+                '>' => (1, 0),
+                'v' => (0, 1),
+                _ => panic!("invalid input {}", c),
+            }
+        }).for_each(|m| {
+            if m.0 == 0 {
+                let mut boxes_to_move = Vec::new();
+
+                let get_boxes_on_next_step = |last_row: Option<&HashSet<(isize, isize)>>| {
+                    let mut b = HashSet::new();
+                    match last_row {
+                        None => {
+                            for d in [-1, 0] {
+                                let pos = (robot.0 + d, robot.1 + m.1);
+                                if walls.contains(&pos) { return None; }
+                                else if boxes.contains(&pos) { b.insert(pos); }
+                            }
+                        },
+                        Some(last_row) => {
+                            for &pos in last_row {
+                                for d in [-1, 0, 1] {
+                                    let pos = (pos.0 + d, pos.1 + m.1);
+                                    if walls.contains(&pos) { return None; }
+                                    else if boxes.contains(&pos) { b.insert(pos); }
+                                }
+                            }
+                        }
+                    }
+                    Some(b)
+                };
+
+                if loop {
+                    match get_boxes_on_next_step(boxes_to_move.last()) {
+                        None => break false,
+                        Some(level) if level.is_empty() => break true,
+                        Some(level) => boxes_to_move.push(level),
+                    };
+                } {
+                    while let Some(level) = boxes_to_move.pop() {
+                        level.into_iter().for_each(|b| {
+                            boxes.remove(&b);
+                            boxes.insert((b.0, b.1 + m.1));
+                        });
+                    }
+                    robot.1 += m.1;
+                }
+            }
+            else if m.1 == 0 {
+                let initial_p = if m.0 == 1 { (robot.0 + 1, robot.1) } else { (robot.0 - 2, robot.1) };
+                let mut p = initial_p;
+                if loop {
+                    if walls.contains(&p) { break false; }
+                    if !boxes.contains(&p) { break true; }
+                    p.0 += m.0 * 2;
+                } {
+                    while p != initial_p {
+                        p.0 -= m.0 * 2;
+                        boxes.remove(&p);
+                        boxes.insert((p.0 + m.0, p.1));
+                    }
+                    robot.0 += m.0;
+                }
+            }
+        });
+
+        Ok(boxes.into_iter().map(|(x, y)| (y * 100 + x) as usize).sum::<usize>())
+    }
+}
