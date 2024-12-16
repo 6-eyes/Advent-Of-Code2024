@@ -1,5 +1,5 @@
 use super::{Solution, Error};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::{cmp::Reverse, collections::{BinaryHeap, HashMap, HashSet, VecDeque}};
 
 pub struct Day1;
 
@@ -1115,5 +1115,113 @@ impl Solution for Day15 {
         });
 
         Ok(boxes.into_iter().map(|(x, y)| (y * 100 + x) as usize).sum::<usize>())
+    }
+}
+
+pub struct Day16;
+
+impl Solution for Day16 {
+    fn part_1(&self, input: String) -> Result<usize, Error> {
+        let (walls, s, e) = {
+            let (walls, s, e) = input.lines().enumerate().fold((HashSet::new(), None, None), |(mut walls, mut start, mut end), (y, l)| {
+                l.chars().enumerate().for_each(|(x, c)| {
+                    let (x, y) = (x as isize, y as isize);
+                    match c {
+                        '#' => { walls.insert((x, y)); },
+                        'S' if start.is_none() => start = Some((x, y)),
+                        'E' if end.is_none() => end = Some((x, y)),
+                        '.' => (),
+                        _ => panic!("invalid input {}", c),
+                    }
+                });
+                (walls, start, end)
+            });
+
+            (walls, s.expect("start position cannot be determined"), e.expect("end position cannot be determined"))
+        };
+
+        let mut nodes = BinaryHeap::new();
+        nodes.push(Reverse((0, s, (1, 0))));
+
+        let mut seen = HashSet::new();
+
+        let mut total = None;
+        while let Some(Reverse((cost, (x, y), (dx, dy)))) = nodes.pop() {
+            if e == (x, y) {
+                total = Some(cost);
+                break;
+            }
+            seen.insert(((x, y), (dx, dy)));
+            [(cost + 1, (x + dx, y + dy), (dx, dy)), (cost + 1000, (x, y), (-dy, dx)), (cost + 1000, (x, y), (dy, -dx))].into_iter().filter(|state| !walls.contains(&state.1) && !seen.contains(&(state.1, state.2))).for_each(|state| nodes.push(Reverse(state)));
+        }
+
+        total.ok_or(Error::InvalidInput("cost cannot be determined".into()))
+    }
+
+    fn part_2(&self, input: String) -> Result<usize, Error> {
+        let (walls, s, e) = {
+            let (walls, s, e) = input.lines().enumerate().fold((HashSet::new(), None, None), |(mut walls, mut start, mut end), (y, l)| {
+                l.chars().enumerate().for_each(|(x, c)| {
+                    let (x, y) = (x as isize, y as isize);
+                    match c {
+                        '#' => { walls.insert((x, y)); },
+                        'S' if start.is_none() => start = Some((x, y)),
+                        'E' if end.is_none() => end = Some((x, y)),
+                        '.' => (),
+                        _ => panic!("invalid input {}", c),
+                    }
+                });
+                (walls, start, end)
+            });
+
+            (walls, s.expect("start position cannot be determined"), e.expect("end position cannot be determined"))
+        };
+
+        let mut nodes = BinaryHeap::new();
+        nodes.push(Reverse((0, s, (1, 0))));
+
+        let mut total = usize::MAX;
+
+        let mut lowest = HashMap::new();
+        lowest.insert((s, (1, 0)), 0);
+
+        let mut parents = HashMap::new();
+        let mut end_state = HashSet::new();
+
+        while let Some(Reverse((cost, (x, y), (dx, dy)))) = nodes.pop() {
+            if e == (x, y) {
+                if cost > total { break; }
+                total = cost;
+                end_state.insert(((x, y), (dx, dy)));
+            }
+
+            [(cost + 1, (x + dx, y + dy), (dx, dy)), (cost + 1000, (x, y), (-dy, dx)), (cost + 1000, (x, y), (dy, -dx))].into_iter().filter(|state| !walls.contains(&state.1)).for_each(|(new_cost, new_pos, new_direction)| {
+                let lowest_cost = *lowest.get(&(new_pos, new_direction)).unwrap_or(&usize::MAX);
+                match new_cost.cmp(&lowest_cost) {
+                    std::cmp::Ordering::Greater => (),
+                    o => {
+                        if let std::cmp::Ordering::Less = o {
+                            lowest.insert((new_pos, new_direction), new_cost);
+                            parents.insert((new_pos, new_direction), HashSet::new());
+                        }
+                        parents.get_mut(&(new_pos, new_direction)).unwrap().insert(((x, y), (dx, dy)));
+                        nodes.push(Reverse((new_cost, new_pos, new_direction)));
+                    },
+                }
+            });
+        }
+
+        let mut backtrack = end_state.iter().copied().collect::<VecDeque<((isize, isize), (isize, isize))>>();
+        while let Some(state) = backtrack.pop_back() {
+            match parents.get(&state) {
+                None => break,
+                Some(s) => s.iter().for_each(|&v| if !end_state.contains(&v) {
+                    backtrack.push_front(v);
+                    end_state.insert(v);
+                }),
+            }
+        }
+
+        Ok(end_state.into_iter().map(|(pos, _)| pos).collect::<HashSet<(isize, isize)>>().len())
     }
 }
