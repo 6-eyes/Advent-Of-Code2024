@@ -4,7 +4,7 @@ use std::{cmp::Reverse, collections::{BinaryHeap, HashMap, HashSet, VecDeque}};
 pub struct Day1;
 
 impl Solution for Day1 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let mut re: (Vec<usize>, Vec<usize>) = input.lines().map(|l| {
             let mut s = l.split_whitespace();
             let parse = |s: Option<&str>| s.expect("invalid input").parse::<usize>().expect("unable to parse input");
@@ -16,10 +16,10 @@ impl Solution for Day1 {
 
         let ans = re.0.into_iter().zip(re.1).map(|(v1, v2)| v1.abs_diff(v2)).sum::<usize>();
 
-        Ok(ans)
+        Ok(Box::new(ans))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let re: (Vec<usize>, Vec<usize>) = input.lines().map(|l| {
             let mut s = l.split_whitespace();
             let parse = |s: Option<&str>| s.expect("invalid input").parse::<usize>().expect("unable to parse input");
@@ -31,18 +31,18 @@ impl Solution for Day1 {
             acc
         });
 
-        Ok(re.0.into_iter().fold(data, |mut acc, val| {
+        Ok(Box::new(re.0.into_iter().fold(data, |mut acc, val| {
             acc.entry(val).and_modify(|v| v.0 += 1);
             acc
-        }).into_iter().map(|(k, (v1, v2))| k * v1 * v2).sum::<usize>())
+        }).into_iter().map(|(k, (v1, v2))| k * v1 * v2).sum::<usize>()))
     }
 }
 
 pub struct Day2;
 
 impl Solution for Day2 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
-        Ok(input.lines().fold(0, |acc, l| {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        Ok(Box::new(input.lines().fold(0, |acc, l| {
             let nums = l.split_whitespace().map(|v| v.parse::<usize>().expect("unable to parse input. Input not a number!")).collect::<Vec<usize>>();
             let mut increasing = None;
             for win in nums.windows(2) {
@@ -56,18 +56,18 @@ impl Solution for Day2 {
                 };
             }
             acc + 1
-        }))
+        })))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
-        Ok(input.lines().fold(0, |acc, l| {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        Ok(Box::new(input.lines().fold(0, |acc, l| {
             let nums = l.split_whitespace().map(|v| v.parse::<usize>().expect("unable to parse input. Input not a number!")).collect::<Vec<usize>>();
             for i in 0..nums.len() {
                 let nums = nums[0..i].iter().chain(&nums[i + 1..]).map(usize::to_owned).collect::<Vec<usize>>();
                 if Self::valid_levels(nums) { return acc + 1 }
             }
             acc
-        }))
+        })))
     }
 }
 
@@ -92,11 +92,11 @@ impl Day2 {
 pub struct Day3;
 
 impl Solution for Day3 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let initial = "mul(";
         let comma = ",";
         let end_parenthesis = ")";
-        Ok(input.lines().fold(0, |mut acc, l| {
+        Ok(Box::new(input.lines().fold(0, |mut acc, l| {
             let get_num = |start| {
                 let num = &l[start..].chars().take_while(char::is_ascii_digit).collect::<String>();
                 num.parse::<usize>().ok().map(|v| (v, num.len()))
@@ -129,10 +129,10 @@ impl Solution for Day3 {
                 }
             }
             acc
-        }))
+        })))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let initial = "mul(";
         let do_instruction = "do()";
         let dont_instruction = "don't()";
@@ -140,7 +140,7 @@ impl Solution for Day3 {
         let end_parenthesis = ")";
 
         let mut enabled = true;
-        Ok(input.lines().fold(0, |mut acc, l| {
+        Ok(Box::new(input.lines().fold(0, |mut acc, l| {
             let get_num = |start| {
                 let num = &l[start..].chars().take_while(char::is_ascii_digit).collect::<String>();
                 num.parse::<usize>().ok().map(|v| (v, num.len()))
@@ -182,14 +182,14 @@ impl Solution for Day3 {
                 }
             }
             acc
-        }))
+        })))
     }
 }
 
 pub struct Day4;
 
 impl Solution for Day4 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let word = "XMAS";
         let grid = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
         let w = grid.first().expect("invalid input").len() as isize;
@@ -199,7 +199,7 @@ impl Solution for Day4 {
         let directions = [-1, 0, 1].into_iter().flat_map(|y| [-1, 0, 1].into_iter().map(move |x| (x, y))).filter(|&(x, y)| x != 0 || y != 0).collect::<Vec<(isize, isize)>>();
         let word_vec = word.chars().collect::<Vec<char>>();
 
-        Ok((0..h).fold(0, |h_acc, y| {
+        Ok(Box::new((0..h).fold(0, |h_acc, y| {
             (0..w).fold(0, |mut w_acc, x| {
                 w_acc += directions.iter().fold(0, |acc, (del_x, del_y)| {
 
@@ -218,28 +218,28 @@ impl Solution for Day4 {
                 });
                 w_acc
             }) + h_acc
-        }))
+        })))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let grid = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
         let w = grid.first().expect("invalid input").len() as isize;
         let h = grid.len() as isize;
 
         if h < 3 || w < 3 {
-            return Ok(0);
+            return Ok(Box::new(0));
         }
 
         let char_at = |x: isize, y: isize| grid[y as usize][x as usize];
 
-        Ok((1..h - 1).fold(0, |h_acc, y| {
+        Ok(Box::new((1..h - 1).fold(0, |h_acc, y| {
             (1..w - 1).fold(0, |w_acc, x| {
                 match char_at(x, y) == 'A' && (char_at(x - 1, y - 1) == 'M' && char_at(x + 1, y + 1) == 'S' || char_at(x - 1, y - 1) == 'S' && char_at(x + 1, y + 1) == 'M') && (char_at(x - 1, y + 1) == 'M' && char_at(x + 1, y - 1) == 'S' || char_at(x - 1, y + 1) == 'S' && char_at(x + 1, y - 1) == 'M') {
                     true => w_acc + 1,
                     false => w_acc,
                 }
             }) + h_acc
-        }))
+        })))
 
     }
 }
@@ -248,7 +248,7 @@ pub struct Day5;
 
 
 impl Solution for Day5 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let invalid = "invalid input";
         let (rules, updates) = input.split_once("\n\n").expect(invalid);
         let rulebook = rules.lines().fold(HashMap::new(), |mut acc, l| {
@@ -260,7 +260,7 @@ impl Solution for Day5 {
             acc
         });
 
-        Ok(updates.lines().fold(0, |acc, l| {
+        Ok(Box::new(updates.lines().fold(0, |acc, l| {
             let line = l.split(",").map(|v| v.parse::<usize>().expect(invalid)).collect::<Vec<usize>>();
             if line.len() < 2 {
                 return acc + 1;
@@ -275,10 +275,10 @@ impl Solution for Day5 {
             }
 
             acc + line[line.len() / 2]
-        }))
+        })))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let invalid = "invalid input";
         let (rules, updates) = input.split_once("\n\n").expect(invalid);
         let rulebook = rules.lines().fold(HashMap::new(), |mut acc, l| {
@@ -290,7 +290,7 @@ impl Solution for Day5 {
             acc
         });
 
-        Ok(updates.lines().fold(0, |acc, l| {
+        Ok(Box::new(updates.lines().fold(0, |acc, l| {
             let mut line = l.split(",").map(|v| v.parse::<usize>().expect(invalid)).collect::<Vec<usize>>();
             if line.len() < 2 {
                 return acc + 1;
@@ -317,14 +317,14 @@ impl Solution for Day5 {
             }
 
             acc
-        }))
+        })))
     }
 }
 
 pub struct Day6;
 
 impl Solution for Day6 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let ((mut x, mut y), map) = {
             let mut start = None;
             let map = input.lines().enumerate().map(|(y, l)| l.chars().enumerate().inspect(|&(x, c)| {
@@ -367,10 +367,10 @@ impl Solution for Day6 {
             y += del_y;
         }
 
-        Ok(set.len())
+        Ok(Box::new(set.len()))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let (start , mut map) = {
             let mut start = None;
             let map = input.lines().enumerate().map(|(y, l)| l.chars().enumerate().inspect(|&(x, c)| {
@@ -394,7 +394,7 @@ impl Solution for Day6 {
             _ => unreachable!(),
         };
 
-        Ok((0..h).fold(0, |h_acc, oy| {
+        Ok(Box::new((0..h).fold(0, |h_acc, oy| {
             (0..w).fold(0, |mut w_acc, ox| {
                 if map[oy as usize][ox as usize] == '.' {
                     // create obstacle
@@ -433,16 +433,16 @@ impl Solution for Day6 {
 
                 w_acc
             }) + h_acc
-        }))
+        })))
     }
 }
 
 pub struct Day7;
 
 impl Solution for Day7 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let error_str = "Invalid input";
-        Ok(input.lines().fold(0, |acc, l| {
+        Ok(Box::new(input.lines().fold(0, |acc, l| {
             let (test_str, numbers_str) = l.split_once(":").expect(error_str);
             let test = test_str.parse::<usize>().expect(error_str);
             let numbers = numbers_str.split_whitespace().map(|num_str| num_str.parse::<usize>().expect(error_str)).collect::<Vec<usize>>();
@@ -450,12 +450,12 @@ impl Solution for Day7 {
                 true => acc + test,
                 false => acc,
             }
-        }))
+        })))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let error_str = "Invalid input";
-        Ok(input.lines().fold(0, |acc, l| {
+        Ok(Box::new(input.lines().fold(0, |acc, l| {
             let (test_str, numbers_str) = l.split_once(":").expect(error_str);
             let test = test_str.parse::<usize>().expect(error_str);
             let numbers = numbers_str.split_whitespace().map(|num_str| num_str.parse::<usize>().expect(error_str)).collect::<Vec<usize>>();
@@ -463,7 +463,7 @@ impl Solution for Day7 {
                 true => acc + test,
                 false => acc,
             }
-        }))
+        })))
     }
 }
 
@@ -488,7 +488,7 @@ impl Day7 {
 pub struct Day8;
 
 impl Solution for Day8 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let (antennas, w, h) = {
             let mut h = None;
             let mut w = None;
@@ -506,7 +506,7 @@ impl Solution for Day8 {
             (antennas, w.unwrap() as isize, h.unwrap() as isize + 1)
         };
 
-        Ok(antennas.values().fold(HashSet::new(), |mut acc, antennas| {
+        Ok(Box::new(antennas.values().fold(HashSet::new(), |mut acc, antennas| {
             antennas.iter().flat_map(|&left| {
                 antennas.iter().filter_map(move |&right| match left == right {
                     true => None,
@@ -520,10 +520,10 @@ impl Solution for Day8 {
             });
 
             acc
-        }).len())
+        }).len()))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let (antennas, w, h) = {
             let mut h = None;
             let mut w = None;
@@ -544,7 +544,7 @@ impl Solution for Day8 {
         // initialize the antinodes with antennas
         let antinodes = antennas.values().flatten().map(|&v| (v.0 as isize, v.1 as isize)).collect::<HashSet<(isize, isize)>>();
 
-        Ok(antennas.values().fold(antinodes, |mut acc, antennas| {
+        Ok(Box::new(antennas.values().fold(antinodes, |mut acc, antennas| {
             antennas.iter().flat_map(|&left| {
                 antennas.iter().filter_map(move |&right| match left == right {
                     true => None,
@@ -563,14 +563,14 @@ impl Solution for Day8 {
             });
 
             acc
-        }).len())
+        }).len()))
     }
 }
 
 pub struct Day9;
 
 impl Solution for Day9 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let mut id = 0;
         let mut disk = input.lines().flat_map(&str::chars).enumerate().flat_map(|(i, c)| {
             if let Some(count) = c.to_digit(10) {
@@ -589,7 +589,7 @@ impl Solution for Day9 {
             }
         }).collect::<Vec<Option<usize>>>();
 
-        if disk.is_empty() { return Ok(0) }
+        if disk.is_empty() { return Ok(Box::new(0)) }
 
         let mut s = 0;
         let mut e = disk.len() - 1;
@@ -603,10 +603,10 @@ impl Solution for Day9 {
             s += 1;
         }
 
-        Ok(disk.into_iter().flatten().enumerate().fold(0, |acc, (i, v)| i * v + acc))
+        Ok(Box::new(disk.into_iter().flatten().enumerate().fold(0, |acc, (i, v)| i * v + acc)))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let err_msg = "invalid input";
         let (mut files, mut spaces, mut fid, _) = input.lines().flat_map(&str::chars).enumerate().fold((HashMap::new(), Vec::new(), 0usize, 0), |(mut files, mut spaces, fid, pos), (i, c)| {
             let count = c.to_digit(10).expect(err_msg) as usize;
@@ -639,14 +639,14 @@ impl Solution for Day9 {
             }
         }
 
-        Ok(files.into_iter().map(|(k, v)| k * v.1 * (2 * v.0 + v.1 - 1) / 2).sum::<usize>())
+        Ok(Box::new(files.into_iter().map(|(k, v)| k * v.1 * (2 * v.0 + v.1 - 1) / 2).sum::<usize>()))
     }
 }
 
 pub struct Day10;
 
 impl Solution for Day10 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let (mut trailheads, grid) = input.lines().enumerate().fold((Vec::new(), Vec::new()), |(mut trailheads, mut grid), (y, l)| {
             grid.push(l.chars().enumerate().map(|(x, c)| {
                 let c = c.to_digit(10).expect("invalid input");
@@ -685,10 +685,10 @@ impl Solution for Day10 {
 
         }
 
-        Ok(score)
+        Ok(Box::new(score))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let (mut trailheads, grid) = input.lines().enumerate().fold((VecDeque::new(), Vec::new()), |(mut trailheads, mut grid), (y, l)| {
             grid.push(l.chars().enumerate().map(|(x, c)| {
                 let c = c.to_digit(10).expect("invalid input");
@@ -715,25 +715,25 @@ impl Solution for Day10 {
             });
         }
 
-        Ok(score)
+        Ok(Box::new(score))
     }
 }
 
 pub struct Day11;
 
 impl Solution for Day11 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let init_stones = input.split_whitespace().map(|v| v.parse::<usize>().expect("invalid input")).collect::<Vec<usize>>();
         let blinks = 25;
         
-        Ok(Self::count(&init_stones, blinks, &mut HashMap::new()))
+        Ok(Box::new(Self::count(&init_stones, blinks, &mut HashMap::new())))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let init_stones = input.split_whitespace().map(|v| v.parse::<usize>().expect("invalid input")).collect::<Vec<usize>>();
         let blinks = 75;
         
-        Ok(Self::count(&init_stones, blinks, &mut HashMap::new()))
+        Ok(Box::new(Self::count(&init_stones, blinks, &mut HashMap::new())))
     }
 }
 
@@ -768,7 +768,7 @@ impl Day11 {
 pub struct Day12;
 
 impl Solution for Day12 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let region = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
         let char_at = |x: isize, y: isize| region[y as usize][x as usize];
 
@@ -803,13 +803,13 @@ impl Solution for Day12 {
             (plots, seen)
         }).0;
 
-        Ok(plots.into_iter().map(|plot| {
+        Ok(Box::new(plots.into_iter().map(|plot| {
             let area = plot.len();
             area * plot.iter().fold(area * 4, |acc, &(x, y)| acc - [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().filter(|coor| plot.contains(coor)).count())
-        }).sum::<usize>())
+        }).sum::<usize>()))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let region = input.lines().map(|l| l.chars().collect::<Vec<char>>()).collect::<Vec<Vec<char>>>();
         let char_at = |x: isize, y: isize| region[y as usize][x as usize];
 
@@ -844,7 +844,7 @@ impl Solution for Day12 {
             (plots, seen)
         }).0;
 
-        Ok(plots.into_iter().map(|plot| {
+        Ok(Box::new(plots.into_iter().map(|plot| {
             plot.len() * plot.into_iter().fold(HashMap::new(), |mut acc: HashMap<(isize, isize), Vec<(isize, isize)>>, (x, y)| {
                 let (x, y) = (2 * x, 2 * y);
                 [(x + 1, y + 1), (x - 1, y + 1), (x - 1, y - 1), (x + 1, y - 1)].into_iter().for_each(|(i, j)| {
@@ -856,19 +856,19 @@ impl Solution for Day12 {
                     1 | 3 => 1,
                     _ => 0,
             }).sum::<usize>()
-        }).sum::<usize>())
+        }).sum::<usize>()))
     }
 }
 
 pub struct Day13;
 
 impl Solution for Day13 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
-        Ok(Self::win_prize(input, 0))
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        Ok(Box::new(Self::win_prize(input, 0)))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
-        Ok(Self::win_prize(input, 10000000000000))
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        Ok(Box::new(Self::win_prize(input, 10000000000000)))
     }
 }
 
@@ -904,14 +904,14 @@ impl Day13 {
 pub struct Day14;
 
 impl Solution for Day14 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let error_msg = "invalid input";
         let w = 101; // 11 for test
         let h = 103; // 7 for test
         let (w_half, h_half) = (w / 2, h / 2);
         let seconds = 100;
 
-        Ok(input.lines().fold(&mut [0; 4], |acc, l| {
+        Ok(Box::new(input.lines().fold(&mut [0; 4], |acc, l| {
             let mut line_iter = l.split_whitespace().map(|s: &str| {
                 let (_, coor_str) = s.split_once('=').expect(error_msg);
                 let (x, y) = coor_str.split_once(',').expect(error_msg);
@@ -930,10 +930,10 @@ impl Solution for Day14 {
             else if x < w_half && y > h_half { acc[2] += 1; }
             else if x > w_half && y > h_half { acc[3] += 1; }
             acc
-        }).iter_mut().fold(1, |acc, v| acc * *v))
+        }).iter_mut().fold(1, |acc, v| acc * *v)))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let error_msg = "invalid input";
         let w = 101; // 11 for test
         let h = 103; // 7 for test
@@ -950,7 +950,7 @@ impl Solution for Day14 {
         }).collect::<Vec<((isize, isize), (isize, isize))>>();
 
         let mut second = 0;
-        Ok(loop {
+        Ok(Box::new(loop {
             second += 1;
             let unique_positions = input.iter_mut().fold(HashSet::new(), |mut acc, (p, v)| {
                 let m = |x, v, l| ((x + v) % l + l) % l;
@@ -967,14 +967,14 @@ impl Solution for Day14 {
                 // map.into_iter().for_each(|l| println!("{}", l.into_iter().collect::<String>()));
                 break second;
             }
-        })
+        }))
     }
 }
 
 pub struct Day15;
 
 impl Solution for Day15 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let error_msg = "invalid input";
         let (grid, moves) = input.split_once("\n\n").expect(error_msg);
 
@@ -1022,10 +1022,10 @@ impl Solution for Day15 {
             }
         });
 
-        Ok(boxes.into_iter().map(|(x, y)| (y * 100 + x) as usize).sum::<usize>())
+        Ok(Box::new(boxes.into_iter().map(|(x, y)| (y * 100 + x) as usize).sum::<usize>()))
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let error_msg = "invalid input";
         let (grid, moves) = input.split_once("\n\n").expect(error_msg);
 
@@ -1114,14 +1114,14 @@ impl Solution for Day15 {
             }
         });
 
-        Ok(boxes.into_iter().map(|(x, y)| (y * 100 + x) as usize).sum::<usize>())
+        Ok(Box::new(boxes.into_iter().map(|(x, y)| (y * 100 + x) as usize).sum::<usize>()))
     }
 }
 
 pub struct Day16;
 
 impl Solution for Day16 {
-    fn part_1(&self, input: String) -> Result<usize, Error> {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let (walls, s, e) = {
             let (walls, s, e) = input.lines().enumerate().fold((HashSet::new(), None, None), |(mut walls, mut start, mut end), (y, l)| {
                 l.chars().enumerate().for_each(|(x, c)| {
@@ -1155,10 +1155,13 @@ impl Solution for Day16 {
             [(cost + 1, (x + dx, y + dy), (dx, dy)), (cost + 1000, (x, y), (-dy, dx)), (cost + 1000, (x, y), (dy, -dx))].into_iter().filter(|state| !walls.contains(&state.1) && !seen.contains(&(state.1, state.2))).for_each(|state| nodes.push(Reverse(state)));
         }
 
-        total.ok_or(Error::InvalidInput("cost cannot be determined".into()))
+        match total {
+            None => Err(Error::InvalidInput("cost cannot be determined".into())),
+            Some(v) => Ok(Box::new(v)),
+        }
     }
 
-    fn part_2(&self, input: String) -> Result<usize, Error> {
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
         let (walls, s, e) = {
             let (walls, s, e) = input.lines().enumerate().fold((HashSet::new(), None, None), |(mut walls, mut start, mut end), (y, l)| {
                 l.chars().enumerate().for_each(|(x, c)| {
@@ -1222,6 +1225,120 @@ impl Solution for Day16 {
             }
         }
 
-        Ok(end_state.into_iter().map(|(pos, _)| pos).collect::<HashSet<(isize, isize)>>().len())
+        Ok(Box::new(end_state.into_iter().map(|(pos, _)| pos).collect::<HashSet<(isize, isize)>>().len()))
+    }
+}
+
+pub struct Day17;
+
+impl Solution for Day17 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let (registers, program) = {
+            let err_msg = "invalid input";
+            let (registers, program) = input.split_once("\n\n").expect(err_msg);
+
+            let mut register_iter = registers.lines().map(|l| l.split_once(':').expect(err_msg).1.trim().parse::<usize>().expect(err_msg));
+            let mut n = || register_iter.next().expect(err_msg);
+
+            let program = program.split_once(':').expect(err_msg).1.trim().split(',').map(|s| s.parse::<usize>().expect(err_msg)).collect::<Vec<usize>>();
+
+            (&mut [n(), n(), n()], program)
+        };
+
+        let mut pointer = 0;
+
+        let mut output = Vec::new();
+
+        while pointer < program.len() && pointer + 1 < program.len() {
+            let (opcode, operand) = (program[pointer], program[pointer + 1]);
+            let combo = |n| match n {
+                (0..=3) => n,
+                (4..7) => registers[n - 4],
+                _ => panic!("invalid operand {n}"),
+            };
+
+            match opcode {
+                0 | 6 | 7 => {
+                    let n = match opcode {
+                        0 => 0,
+                        6 => 1,
+                        7 => 2,
+                        _ => unreachable!(),
+                    };
+
+                    registers[n] = registers[0] >> combo(operand);
+                },
+                1 => registers[1] ^= operand,
+                2 => registers[1] = combo(operand) & 7,
+                3 => if registers[0] != 0 {
+                    pointer = operand;
+                    continue;
+                },
+                4 => registers[1] ^= registers[2],
+                5 => output.push(combo(operand) & 7),
+                _ => panic!("invalid opcode {opcode}"),
+            };
+
+            pointer += 2;
+        }
+
+        Ok(Box::new(output.into_iter().map(|i| i.to_string()).collect::<Vec<String>>().join(",")))
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let err_msg = "invalid input";
+        let program = input.lines().last().expect(err_msg).split_once(':').expect(err_msg).1.trim().split(',').map(|s| s.parse::<usize>().expect(err_msg)).collect::<Vec<usize>>();
+
+        if program.ends_with(&[3, 0]) {
+            Ok(Box::new(Self::solve(&program, 0, &program[..program.len() - 2]).unwrap()))
+        }
+        else {
+            Err(Error::InvalidInput("input doesn't loop".into()))
+        }
+    }
+}
+
+impl Day17 {
+    fn solve(remaining: &[usize], a: usize, program: &[usize]) -> Option<usize> {
+        if remaining.is_empty() { Some(a) }
+        else {
+            for i in 0..8 {
+                let registers = &mut [a << 3 | i, 0, 0];
+                let mut adv_shift_performed = false;
+                let mut output = None;
+                
+                for pointer in (0..program.len()).step_by(2) {
+                    let (opcode, operand) = (program[pointer], program[pointer + 1]);
+                    let combo = |n| match n {
+                        (0..=3) => n,
+                        (4..7) => registers[n - 4],
+                        _ => panic!("invalid operand {n}"),
+                    };
+
+                    match opcode {
+                        0 => {
+                            if operand != 3 { panic!("invalid shift. Operand is other than 3. UHANDLED."); }
+                            else if adv_shift_performed { panic!("multiple shifing operations. UHANDLED."); }
+                            else { adv_shift_performed = true; }
+                        },
+                        1 => registers[1] ^= operand,
+                        2 => registers[1] = combo(operand) & 7,
+                        3 => panic!("multiple jump instructions present. UHANDLED."),
+                        4 => registers[1] ^= registers[2],
+                        5 => if output.is_none() { output = Some(combo(operand) & 7); }
+                            else { panic!("multiple outputs present. UHANDLED."); },
+                        6 | 7 => registers[opcode - 5] = registers[0] >> combo(operand),
+                        _ => panic!("invalid opcode {opcode}"),
+                    };
+                }
+                if output.is_some() && output.unwrap() == *remaining.last().unwrap() {
+                    if let Some(v) = Self::solve(&remaining[..remaining.len() - 1], registers[0], program) {
+                        return Some(v);
+                    }
+                }
+            }
+
+            None
+        }
     }
 }
