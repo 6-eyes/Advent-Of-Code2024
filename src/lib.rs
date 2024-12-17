@@ -52,24 +52,24 @@ fn create(day: u8) -> Result<(), std::io::Error> {
 }
 
 fn get_solution(day: u8) -> Box<dyn Solution> {
-    // match day {
-    //     1 => Box::new(solution::Day1),
-    //     2 => Box::new(solution::Day2),
-    //     3 => Box::new(solution::Day3),
-    //     4 => Box::new(solution::Day4),
-    //     5 => Box::new(solution::Day5),
-    //     6 => Box::new(solution::Day6),
-    //     7 => Box::new(solution::Day7),
-    //     8 => Box::new(solution::Day8),
-    //     9 => Box::new(solution::Day9),
-    //     10 => Box::new(solution::Day10),
-    //     11 => Box::new(solution::Day11),
-    //     12 => Box::new(solution::Day12),
-    //     13 => Box::new(solution::Day13),
-    //     14 => Box::new(solution::Day14),
-    //     15 => Box::new(solution::Day15),
-    //     16 => Box::new(solution::Day16),
-    //     17 => Box::new(solution::Day17),
+    match day {
+        1 => Box::new(solution::Day1),
+        2 => Box::new(solution::Day2),
+        3 => Box::new(solution::Day3),
+        4 => Box::new(solution::Day4),
+        5 => Box::new(solution::Day5),
+        6 => Box::new(solution::Day6),
+        7 => Box::new(solution::Day7),
+        8 => Box::new(solution::Day8),
+        9 => Box::new(solution::Day9),
+        10 => Box::new(solution::Day10),
+        11 => Box::new(solution::Day11),
+        12 => Box::new(solution::Day12),
+        13 => Box::new(solution::Day13),
+        14 => Box::new(solution::Day14),
+        15 => Box::new(solution::Day15),
+        16 => Box::new(solution::Day16),
+        17 => Box::new(solution::Day17),
         // 18 => Box::new(solution::Day18),
         // 19 => Box::new(solution::Day19),
         // 20 => Box::new(solution::Day20),
@@ -78,14 +78,7 @@ fn get_solution(day: u8) -> Box<dyn Solution> {
         // 23 => Box::new(solution::Day23),
         // 24 => Box::new(solution::Day24),
         // 25 => Box::new(solution::Day25),
-    //     _ => panic!("Day yet to come!"),
-    // }
-
-    if day == 17 {
-        Box::new(solution::Day17)
-    }
-    else {
-        Box::new(solution::Day1)
+        _ => panic!("Day yet to come!"),
     }
 }
 
