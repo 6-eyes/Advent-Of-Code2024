@@ -1346,3 +1346,85 @@ impl Day17 {
         }
     }
 }
+
+pub struct Day18;
+
+impl Solution for Day18 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        // let l = 6;
+        let l = 70;
+        // let fallen = 12;
+        let fallen = 1024;
+
+        let err_str = "invalid input";
+        let bytes = input.lines().take(fallen).fold(HashSet::new(), |mut acc, l| {
+            let (x_str, y_str) = l.split_once(',').expect(err_str);
+            let parser = |s: &str| s.parse::<isize>().expect(err_str);
+            acc.insert((parser(x_str), parser(y_str)));
+            acc
+        });
+
+        let mut q = VecDeque::new();
+        q.push_back((0, 0, 0));
+
+        let mut seen = HashSet::new();
+
+        while let Some((x, y, d)) = q.pop_front() {
+            for npos in [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().filter(|&(nx, ny)| nx >= 0 && nx <= l && ny >= 0 && ny <= l && !bytes.contains(&(nx, ny))) {
+                if npos == (l, l) { return soln(d + 1); }
+                if !seen.contains(&npos) {
+                    seen.insert(npos);
+                    q.push_back((npos.0, npos.1, d + 1));
+                }
+            }
+        }
+
+        Err(Error::InvalidInput(format!("unable to find path to ({0}, {0})", l - 1)))
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        // let l = 6;
+        let l = 70;
+
+        let err_str = "invalid input";
+        let bytes = input.lines().fold(Vec::new(), |mut acc, l| {
+            let (x_str, y_str) = l.split_once(',').expect(err_str);
+            let parser = |s: &str| s.parse::<isize>().expect(err_str);
+            acc.push((parser(x_str), parser(y_str)));
+            acc
+        });
+
+        let can_pass = |fallen: usize| {
+            let fallen_bytes = &bytes[0..fallen];
+            let mut q = VecDeque::new();
+            q.push_back((0, 0));
+
+            let mut seen = HashSet::new();
+
+            while let Some((x, y)) = q.pop_front() {
+                for npos in [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().filter(|&(nx, ny)| nx >= 0 && nx <= l && ny >= 0 && ny <= l && !fallen_bytes.contains(&(nx, ny))) {
+                    if npos == (l, l) { return true; }
+                    if !seen.contains(&npos) {
+                        seen.insert(npos);
+                        q.push_back((npos.0, npos.1));
+                    }
+                }
+            }
+
+            false
+        };
+
+        let mut left = 0;
+        let mut right = bytes.len() - 1;
+
+        while left < right {
+            let m = (left + right) / 2 + 1;
+            match can_pass(m) {
+                true => left = m,
+                false => right = m - 1,
+            }
+        }
+
+        Ok(Box::new(format!("{},{}", bytes[left].0, bytes[left].1)))
+    }
+}
