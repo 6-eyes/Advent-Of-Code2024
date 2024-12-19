@@ -1428,3 +1428,63 @@ impl Solution for Day18 {
         Ok(Box::new(format!("{},{}", bytes[left].0, bytes[left].1)))
     }
 }
+
+pub struct Day19;
+
+impl Solution for Day19 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let (towels, designs) = {
+            let err_msg = "invalid input";
+            let (towels_str, designs_str) = input.split_once("\n\n").expect(err_msg);
+            let towels = towels_str.split(", ").collect::<Vec<&str>>();
+            let designs = designs_str.lines().collect::<Vec<&str>>();
+            (towels, designs)
+        };
+
+        soln(designs.into_iter().fold((0, HashMap::new()), |(acc, mut mem), design| (acc + Self::is_possible(design, &towels, &mut mem) as usize , mem)).0)
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let (towels, designs) = {
+            let err_msg = "invalid input";
+            let (towels_str, designs_str) = input.split_once("\n\n").expect(err_msg);
+            let towels = towels_str.split(", ").collect::<Vec<&str>>();
+            let designs = designs_str.lines().collect::<Vec<&str>>();
+            (towels, designs)
+        };
+
+        soln(designs.into_iter().fold((0, HashMap::new()), |(acc, mut mem), design| (acc + Self::permutations(design, &towels, &mut mem), mem)).0)
+
+    }
+}
+
+impl Day19 {
+    fn is_possible(design: &str, towels: &[&str], mem: &mut HashMap<String, bool>) -> bool {
+        if design.is_empty() { true }
+        else if let Some(&v) = mem.get(design) { v }
+        else {
+            let mut res = false;
+            for towel in towels {
+                if design.starts_with(towel) && Self::is_possible(&design[towel.len()..], towels, mem) {
+                    res =  true;
+                    break;
+                }
+            }
+            mem.insert(design.to_string(), res);
+            res
+        }
+    }
+
+    fn permutations(design: &str, towels: &[&str], mem: &mut HashMap<String, usize>) -> usize {
+        if design.is_empty() { 1 }
+        else if let Some(&v) = mem.get(design) { v }
+        else {
+            let res = towels.iter().fold(0, |acc, towel| acc + match design.starts_with(towel) {
+                true => Self::permutations(&design[towel.len()..], towels, mem),
+                false => 0,
+            });
+            mem.insert(design.to_string(), res);
+            res
+        }
+    }
+}
