@@ -1585,3 +1585,137 @@ impl Solution for Day20 {
         }).count() + acc))
     }
 }
+
+pub struct Day21;
+
+impl Solution for Day21 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        soln(Self::solve(input, 3))
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        soln(Self::solve(input, 26))
+    }
+}
+
+impl Day21 {
+    /// astraction of common steps to solve Day21
+    fn solve(input: String, depth: usize) -> usize {
+        let mut cache = HashMap::new();
+        input.lines().map(|l| l[..l.len() - 1].parse::<usize>().expect("invalid input") * Self::min_len(&l.chars().collect::<Vec<char>>(), depth, &mut cache)).sum::<usize>()
+    }
+
+    /// Method to determine the minimum length for a sequence to be accomplished by the robot
+    /// present at `depth`
+    fn min_len(query: &[char], depth: usize, cache: &mut HashMap<(Vec<char>, usize), usize>) -> usize {
+        if let Some(&v) = cache.get(&(query.to_vec(), depth)) {
+            return v;
+        }
+
+        let keypad = Keypad::new(query);
+        let to_slide = std::iter::once('A').chain(query.iter().copied()).collect::<Vec<char>>();
+
+        let result = match depth == 1 {
+            true => to_slide.windows(2).map(|w| keypad.distance(w[0], w[1]) + 1).sum::<usize>(),
+            false => to_slide.windows(2).map(|w| match w[0] == w[1] {
+                true => 1,
+                false => keypad.all_routes_between_chars(w[0], w[1]).into_iter().map(|mut r| Self::min_len(r.make_contiguous(), depth - 1, cache)).min().unwrap_or_default(),
+            }).sum::<usize>()
+        };
+
+        cache.insert((query.to_vec(), depth), result);
+        result
+    }
+}
+
+enum Keypad {
+    Numeric,
+    Directional,
+}
+
+impl Keypad {
+    /// Creates a new Keypad based on the query
+    fn new(s: &[char]) -> Self {
+        match s.first().expect("empty query") {
+            '>' | '^' | '<' | 'v' => Self::Directional,
+            c if c.is_ascii_digit() => Self::Numeric,
+            c => panic!("invalid character in keypad: {c}"),
+        }
+    }
+
+    // Determines all routes between two characters on a givn keypad
+    fn all_routes_between_chars(&self, s: char, e: char) -> Vec<VecDeque<char>> {
+        let (start, end) = (self.coordinate(s), self.coordinate(e));
+        self.all_routes_between_coors(start, end, None)
+    }
+
+    /// A utility method to determine all the routes between the given coordinates.
+    /// Purpose of this function is to facilitate recursion.
+    /// Returns a list of routes where each route is a reversed queue of characters
+    fn all_routes_between_coors(&self, s: (usize, usize), e: (usize, usize), prev: Option<(usize, usize)>) -> Vec<VecDeque<char>> {
+        if s == e {
+            let mut r = VecDeque::new();
+            r.push_back('A');
+            vec!{ r }
+        }
+        else {
+            let inline_bound = s.0.min(e.0)..=s.0.max(e.0);
+            let box_bound = s.1.min(e.1)..=s.1.max(e.1);
+
+            let possibilities = {
+                let mut p = vec!{ (s.0 + 1, s.1, '>'), (s.0, s.1 + 1, '^') };
+                if s.0 > 0 { p.push((s.0 - 1, s.1, '<')); }
+                if s.1 > 0 { p.push((s.0, s.1 - 1, 'v')); }
+                p
+            };
+
+            possibilities.into_iter().filter(|&(i, j, _)| inline_bound.contains(&i) && box_bound.contains(&j) && prev.is_none_or(|v| v != (i, j)) && self.gap() != (i, j)).fold(Vec::new(), |mut acc, (a, b, c)| {
+                let mut r = self.all_routes_between_coors((a, b), e, Some(s));
+                r.iter_mut().for_each(|q| q.push_front(c));
+                acc.extend(r);
+                acc
+            })
+        }
+    }
+
+    /// Calculates distance between two characters on a given keypad
+    fn distance(&self, s: char, e: char) -> usize {
+        let start = self.coordinate(s);
+        let end = self.coordinate(e);
+
+        start.0.abs_diff(end.0) + start.1.abs_diff(end.1)
+    }
+
+    /// Determines the coordinates of the char on the keypad
+    fn coordinate(&self, c: char) -> (usize, usize) {
+        match self {
+            Self::Numeric => {
+                match c {
+                    '0' => (1, 0),
+                    'A' => (2, 0),
+                    d @ ('1'..='9') if d.is_ascii_digit() => {
+                        let n = d.to_digit(10).unwrap() as usize - 1;
+                        (n % 3, n / 3 + 1)
+                    },
+                    _ => panic!("invalid character {c} on numeric keypad"),
+                }
+            },
+            Self::Directional => match c {
+                '>' => (2, 0),
+                'v' => (1, 0),
+                '<' => (0, 0),
+                '^' => (1, 1),
+                'A' => (2, 1),
+                _ => panic!("invalid character {c} on directional keypad"),
+            },
+        }
+    }
+
+    /// returns the coordinates of the gap present in the keypad
+    fn gap(&self) -> (usize, usize) {
+        match self {
+            Self::Directional => (0, 1),
+            Self::Numeric => (0, 0),
+        }
+    }
+}
