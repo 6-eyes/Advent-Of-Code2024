@@ -1488,3 +1488,100 @@ impl Day19 {
         }
     }
 }
+
+pub struct Day20;
+
+impl Solution for Day20 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let (start, end, walls) = {
+            let (start, end, walls) = input.lines().enumerate().fold((None, None, HashSet::new()), |(mut start, mut end, mut acc), (y, l)| {
+                l.chars().enumerate().for_each(|(x, c)| {
+                    match c {
+                        '#' => { acc.insert((x, y)); },
+                        'S' if start.is_none() => start = Some((x, y)),
+                        'E' if end.is_none() => end = Some((x, y)),
+                        '.' => (),
+                        _ => panic!("invalid input"),
+                    }
+                });
+                (start, end, acc)
+            });
+
+            (start.expect("tart position cannot be determined"), end.expect("end position cannot be determined"), walls)
+        };
+
+        let distance_map = {
+            let (mut x, mut y) = start;
+            let mut prev = None;
+
+            let mut pico_sec = 0usize;
+            let mut dist = HashMap::new();
+            dist.insert(start, 0);
+
+            while (x, y) != end {
+                let mut points = [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().filter(|p| !walls.contains(p) && prev.is_none_or(|v| v != *p));
+                let next = points.next().expect("dead end");
+                if points.next().is_some() { panic!("multiple paths found"); }
+
+                pico_sec += 1;
+                prev = Some((x, y));
+                (x, y) = next;
+                dist.insert(next, pico_sec);
+            }
+
+            dist
+        };
+
+        let min_jump = 100;
+        soln(distance_map.iter().fold(0, |acc, (&(x, y), &v)| acc + [(x + 1, y - 1), (x + 2, y), (x + 1, y + 1), (x, y + 2)].into_iter().filter(|p| distance_map.get(p).is_some_and(|d| d.abs_diff(v) >= min_jump + 2)).count()))
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let (start, end, walls) = {
+            let (start, end, walls) = input.lines().enumerate().fold((None, None, HashSet::new()), |(mut start, mut end, mut acc), (y, l)| {
+                l.chars().enumerate().for_each(|(x, c)| {
+                    match c {
+                        '#' => { acc.insert((x, y)); },
+                        'S' if start.is_none() => start = Some((x, y)),
+                        'E' if end.is_none() => end = Some((x, y)),
+                        '.' => (),
+                        _ => panic!("invalid input"),
+                    }
+                });
+                (start, end, acc)
+            });
+
+            (start.expect("tart position cannot be determined"), end.expect("end position cannot be determined"), walls)
+        };
+
+        let distance_map = {
+            let (mut x, mut y) = start;
+            let mut prev = None;
+
+            let mut pico_sec = 0usize;
+            let mut dist = HashMap::new();
+            dist.insert(start, 0);
+
+            while (x, y) != end {
+                let mut points = [(x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)].into_iter().filter(|p| !walls.contains(p) && prev.is_none_or(|v| v != *p));
+                let next = points.next().expect("dead end");
+                if points.next().is_some() { panic!("multiple paths found"); }
+
+                pico_sec += 1;
+                prev = Some((x, y));
+                (x, y) = next;
+                dist.insert(next, pico_sec);
+            }
+
+            dist
+        };
+
+        // let save_ps = 76;
+        let save_ps = 100;
+
+        soln(distance_map.keys().enumerate().fold(0, |acc, (i, k1)| distance_map.keys().skip(i + 1).filter(|k2| {
+            let euclidean = k1.0.abs_diff(k2.0) + k1.1.abs_diff(k2.1);
+            euclidean <= 20 && save_ps <= distance_map.get(k1).unwrap().abs_diff(*distance_map.get(k2).unwrap()) - euclidean
+        }).count() + acc))
+    }
+}
