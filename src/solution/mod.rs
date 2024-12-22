@@ -1719,3 +1719,37 @@ impl Keypad {
         }
     }
 }
+
+pub struct Day22;
+
+impl Solution for Day22 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let iterations = 2000;
+        soln(input.lines().map(|l| (0..iterations).fold(l.parse::<usize>().expect("invalid input"), |acc, _| Self::secret(acc))).sum::<usize>())
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let iterations = 2000;
+        soln(*input.lines().fold(HashMap::new(), |mut acc, l| {
+            let mut n = l.parse::<usize>().expect("invalid input");
+            (0..iterations).map(|_| {
+                let unit = n % 10;
+                n = Self::secret(n);
+                unit
+            }).collect::<Vec<usize>>().windows(2).map(|w| (w[1] as isize - w[0] as isize, w[1])).collect::<Vec::<(isize, usize)>>().windows(4).fold(HashMap::new(), |mut acc, w| {
+                acc.entry((w[0].0, w[1].0, w[2].0, w[3].0)).or_insert(w[3].1);
+                acc
+            }).into_iter().for_each(|(k, v)| { acc.entry(k).and_modify(|b| *b += v).or_insert(v); });
+            acc
+        }).values().max().unwrap_or(&0))
+    }
+}
+
+impl Day22 {
+    fn secret(mut n: usize) -> usize {
+        let mix_and_prune = |a: usize, s: usize| (a ^ s) & 0xFFFFFF;
+        n = mix_and_prune(n << 6, n);
+        n = mix_and_prune(n >> 5, n);
+        mix_and_prune(n << 11, n)
+    }
+}
