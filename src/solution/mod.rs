@@ -1753,3 +1753,58 @@ impl Day22 {
         mix_and_prune(n << 11, n)
     }
 }
+
+pub struct Day23;
+
+impl Solution for Day23 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let map = input.lines().fold(HashMap::new(), |mut acc, l| {
+            let connection = l.split_once('-').expect("invalid input");
+            [(connection.0, connection.1), (connection.1, connection.0)].into_iter().for_each(|(c1, c2)| {
+                acc.entry(c1).and_modify(|set: &mut Vec<&str>| { set.push(c2); }).or_insert(vec!{ c2 });
+            });
+            acc
+        });
+
+        soln(map.iter().flat_map(|(c1, connections)| {
+            connections.iter().enumerate().flat_map(|(i, c2)| connections.iter().skip(i + 1).map(move |c3| (c2, c3))).filter(|&(c2, c3)| map[c2].contains(c3)).filter_map(move |(c2, c3)| match [c1, c2, c3].iter().any(|c| c.starts_with('t')) {
+                false => None,
+                true => {
+                    let mut computers = [c1, c2, c3];
+                    computers.sort();
+                    Some(computers)
+                }
+            })
+        }).collect::<HashSet<[&&str; 3]>>().len())
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let map = input.lines().fold(HashMap::new(), |mut acc, l| {
+            let connection = l.split_once('-').expect("invalid input");
+            [(connection.0, connection.1), (connection.1, connection.0)].into_iter().for_each(|(c1, c2)| {
+                acc.entry(c1).and_modify(|conn: &mut Vec<&str>| { conn.push(c2); }).or_insert(vec!{ c2 });
+            });
+            acc
+        });
+
+        let mut s = map.keys().map(|&k| {
+            let mut s = vec!{ k };
+            Self::connected(k, &mut s, &map);
+            s
+        }).max_by(|s1, s2| s1.len().cmp(&s2.len())).expect("empty map");
+
+        s.sort();
+        Ok(Box::new(s.join(",")))
+    }
+}
+
+impl Day23 {
+    fn connected<'a>(node: &str, valid: &mut Vec<&'a str>, map: &'a HashMap<&str, Vec<&str>>) {
+        map[node].iter().for_each(|&neighbor| {
+            if neighbor != node && valid.iter().all(|v| map[neighbor].contains(v)) {
+                valid.push(neighbor);
+                Self::connected(neighbor, valid, map);
+            }
+        });
+    }
+}
