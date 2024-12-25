@@ -1999,3 +1999,46 @@ impl Operator {
         }
     }
 }
+
+pub struct Day25;
+
+impl Solution for Day25 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let (keys, locks, h) = input.split("\n\n").fold((Vec::new(), Vec::new(), None), |(mut keys, mut locks, mut height), part| {
+            if height.is_none() {
+                height = Some(part.lines().count());
+            }
+            let (w, c) = {
+                let first_line = part.lines().next().expect("invalid input");
+                (first_line.len(), first_line.chars().next().expect("invalid input"))
+            };
+
+            let typ = match c {
+                '#' => &mut locks,
+                '.' => &mut keys,
+                _ => panic!("invalid first character {c}"),
+            };
+
+            typ.push(part.lines().fold(vec!{ 0; w }, |mut acc, l| {
+                l.chars().enumerate().for_each(|(i, c)| {
+                    match c {
+                        '#' => acc[i] += 1,
+                        '.' => (),
+                        _ => panic!("invalid char {c}"),
+                    }
+                });
+                acc
+            }));
+
+            (keys, locks, height)
+        });
+
+        let h = h.expect("empty input");
+
+        soln(keys.iter().flat_map(|k| locks.iter().map(move |l| (k, l))).filter(|&(k, l)| k.iter().zip(l).all(|(kb, lb)| kb + lb <= h)).count())
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        todo!()
+    }
+}
