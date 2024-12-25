@@ -76,7 +76,7 @@ fn get_solution(day: u8) -> Box<dyn Solution> {
         21 => Box::new(solution::Day21),
         22 => Box::new(solution::Day22),
         23 => Box::new(solution::Day23),
-        // 24 => Box::new(solution::Day24),
+        24 => Box::new(solution::Day24),
         // 25 => Box::new(solution::Day25),
         _ => panic!("Day yet to come!"),
     }

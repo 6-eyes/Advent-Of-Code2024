@@ -1808,3 +1808,194 @@ impl Day23 {
         });
     }
 }
+
+pub struct Day24;
+
+impl Solution for Day24 {
+    fn part_1(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let err_msg = "invalid input";
+        let (input, gates) = input.split_once("\n\n").expect(err_msg);
+        let mut map = input.lines().fold(HashMap::new(), |mut acc, l| {
+            let (name, val) = l.split_once(": ").expect(err_msg);
+            acc.insert(name, matches!(val, "1"));
+            acc
+        });
+
+        let gates = gates.lines().fold(HashMap::new(), |mut acc, l| {
+            let (lhs, rhs) = l.split_once(" -> ").expect("invalid input");
+            let mut eq = lhs.split_whitespace();
+            let mut next = || eq.next().expect("invalid input");
+            acc.insert(rhs, (next(), Operator::new(next()), next()));
+            acc
+        });
+
+        let mut ans = 0;
+        gates.keys().filter(|k| k.starts_with('z')).for_each(|k|{
+            if Self::solve(k, &mut map, &gates) {
+                let n = &k[1..].parse::<u8>().expect("invalid key");
+                ans |= 1 << n;
+            }
+        });
+
+        soln(ans)
+    }
+
+    fn part_2(&self, input: String) -> Result<Box<dyn std::fmt::Display>, Error> {
+        let err_msg = "invalid input";
+        let (_, gates) = input.split_once("\n\n").expect(err_msg);
+
+        let gates = gates.lines().fold(HashMap::new(), |mut acc, l| {
+            let (lhs, rhs) = l.split_once(" -> ").expect("invalid input");
+            let mut eq = lhs.split_whitespace();
+            let mut next = || eq.next().expect("invalid input");
+            acc.insert(rhs, (next(), Operator::new(next()), next()));
+            acc
+        });
+
+
+        let mut i = 0;
+        while Self::validate(i, &gates) {
+            i += 1;
+        }
+        // println!("failed on: {i}");
+
+        // let mut culprit = None;
+        // let xy = Self::get_wire(i);
+        // for (l, r) in [(xy.0.as_str(), xy.1.as_str()), (xy.1.as_str(), xy.0.as_str())] {
+        //     for (k1, (l1, o1, r1)) in &gates {
+        //         if l1 == &l && o1 == &Operator::Xor && r1 == &r {
+        //             for (k2, (l2, o2, r2)) in &gates {
+        //                 if (l2 == k1 || r2 == k1) && o2 == &Operator::Xor && culprit.is_none() {
+        //                     culprit = Some(k2);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        //
+        // let z = format!("z{i:02}");
+        // let (l, r) = (culprit.unwrap(), z.as_str());
+        // (*gates.get_mut(l).unwrap(), *gates.get_mut(r).unwrap()) = (gates[r], gates[l]);
+
+        // z08 <-> ffj
+        // kfm <-> dwp
+        // z22 <-> gjh
+        // z31 <-> jdr
+        // dwp,ffj,gjh,jdr,kfm,z08,z22,z31
+
+        todo!();
+    }
+}
+
+impl Day24 {
+    fn solve<'a>(q: &'a str, map: &mut HashMap<&'a str, bool>, gates: &HashMap<&'a str, (&'a str, Operator, &'a str)>) -> bool {
+        if let Some(&result) = map.get(q) { result }
+        else {
+            let equation = &gates[q];
+            let result = equation.1.operate()(Self::solve(equation.0, map, gates), Self::solve(equation.2, map, gates));
+            map.entry(q).or_insert(result);
+            result
+        }
+    }
+
+    /// b      c  x  y  | z
+    /// 0 ---> -  x  y  | x ^ y
+    /// n ---> c  x  y  | x ^ y && valid(c)
+    fn valid_bit(wire: &str, n: u8, map: &HashMap<&str, (&str, Operator, &str)>) -> bool {
+        println!("verifying {wire}, {n}");
+        let (l, o, r) = &map[wire];
+        match o {
+            Operator::Xor => {
+                let possibilities = [(l, r), (r ,l)];
+                match n == 0 {
+                    true => possibilities.contains(&(&"x00", &"y00")),
+                    false => possibilities.into_iter().any(|(l, r)| Self::valid_intermediate(l, n, map) && Self::valid_carry(r, n, map)),
+                }
+            },
+            Operator::And | Operator::Or => false,
+        }
+    }
+
+    fn valid_intermediate(wire: &str, n: u8, map: &HashMap<&str, (&str, Operator, &str)>) -> bool {
+        println!("verifying intermediate xor: {wire}, {n}");
+        let (l, o, r) = &map[wire];
+        match o {
+            Operator::Xor => {
+                let wire = Self::get_wire(n);
+                [(l, r), (r ,l)].contains(&(&wire.0.as_str(), &wire.1.as_str()))
+            },
+            Operator::Or | Operator::And => false,
+        }
+    }
+
+    /// b  -->  c  x  y  |  z
+    /// 1  -->  c == (x00 & y00)
+    /// n  -->  c == (x(n - 1) & y(n - 1)) && valid_recarry(n - 1)
+    fn valid_carry(wire: &str, n: u8, map: &HashMap<&str, (&str, Operator, &str)>) -> bool {
+        println!("verifying carry: {wire}, {n}");
+        let (l, o, r) = &map[wire];
+        match n == 1 {
+            true => *o == Operator::And && [(l, r), (r, l)].contains(&(&"x00", &"y00")),
+            false if *o == Operator::Or => [(l, r), (r, l)].into_iter().any(|(l, r)| Self::valid_normal_carry(l, n - 1, map) && Self::valid_recarry(r, n - 1, map)),
+            _ => false,
+        }
+    }
+
+    fn valid_normal_carry(wire: &str, n: u8, map: &HashMap<&str, (&str, Operator, &str)>) -> bool {
+        println!("verifying normal carry: {wire}, {n}");
+        let (l, o, r) = &map[wire];
+        match o {
+            Operator::And => {
+                let wire = Self::get_wire(n);
+                [(l, r), (r ,l)].contains(&(&wire.0.as_str(), &wire.1.as_str()))
+            },
+            Operator::Or | Operator::Xor => false,
+        }
+    }
+
+    fn valid_recarry(wire: &str, n: u8, map: &HashMap<&str, (&str, Operator, &str)>) -> bool {
+        println!("verifying recarry: {wire}, {n}");
+        let (l, o, r) = &map[wire];
+        match o {
+            Operator::And => {
+                [(l, r), (r, l)].into_iter().any(|(l, r)| Self::valid_intermediate(l, n, map) && Self::valid_carry(r, n, map))
+            },
+            Operator::Xor | Operator::Or => false,
+        }
+    }
+
+    fn validate(n: u8, map: &HashMap<&str, (&str, Operator, &str)>) -> bool {
+        Self::valid_bit(format!("z{n:02}").as_str(), n, map)
+    }
+
+    fn get_wire(n: u8) -> (String, String) {
+        let make = |s| format!("{s}{n:02}");
+        (make('x'), make('y'))
+    }
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Operator {
+    And,
+    Xor,
+    Or,
+}
+
+impl Operator {
+    fn new(s: &str) -> Self {
+        match s {
+            "OR" => Self::Or,
+            "XOR" => Self::Xor,
+            "AND" => Self::And,
+            _ => panic!("invalid input"),
+        }
+    }
+
+    fn operate(&self) -> fn(bool, bool) -> bool {
+        match self {
+            Self::Or => |l: bool, r: bool| l | r,
+            Self::And => |l: bool, r: bool| l & r,
+            Self::Xor => |l: bool, r: bool| l ^ r,
+        }
+    }
+}
